@@ -19,7 +19,7 @@ if hostname == 'ferron':
 elif hostname == 'briaree1':
         top_dir = '/RQusagers/roussea4/python_depository/HCF/'
 else:
-    top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_3.0/modules/'
+    top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/modules/'
 
 
 sys.path.append(top_dir)
