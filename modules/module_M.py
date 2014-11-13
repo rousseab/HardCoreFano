@@ -129,8 +129,8 @@ class MGridFunction:
         self.QA = QA_mat.return_list()
         self.QB = QB_mat.return_list()
 
-        del(Id)
-        del(SIG1)
+        del(PA)
+        del(PB)
         del(QA_mat)
         del(QB_mat)
 
