@@ -53,12 +53,12 @@ class MGridFunction:
             
         index = -1
         for alpha in ['x','y']:
-            for i in [0,1]:
+            for L in ['A','B']:
                 for n1 in [0,1]:
                     for n2 in [0,1]:
                         for n3 in [0,1]:
                             index += 1 
-                            key = (alpha,i,n1,n2,n3)
+                            key = (alpha,L,n1,n2,n3)
                             self.index_dictionary[key] = index
 
 
@@ -102,11 +102,12 @@ class MGridFunction:
         ones  = complex(1.,0.)*N.ones(self.nk)
         zeros = complex(1.,0.)*N.zeros(self.nk)
 
-        Id   = MatrixList(    ones ,   zeros,\
-                              zeros,    ones)
+        # Projectors on site A and site B
+        PA   = MatrixList(    ones ,   zeros,\
+                              zeros,   zeros)
 
-        SIG1 = MatrixList(    zeros,    ones,\
-                              ones ,   zeros)
+        PB   = MatrixList(    zeros,   zeros,\
+                              zeros,   ones)
 
         # U matrices, no units
         Uk   = MatrixList(  Ak/N.sqrt(2.)   ,  -Ak/N.sqrt(2.), \
@@ -122,16 +123,16 @@ class MGridFunction:
                             -Akq_star/N.sqrt(2.),  ones/N.sqrt(2.))
 
         # Q matrices - without units
-        Q1_mat = Ukqd*Id*Uk
-        Q2_mat = Ukqd*SIG1*Uk
+        QA_mat = Ukqd*PA*Uk
+        QB_mat = Ukqd*PB*Uk
 
-        self.Q1 = Q1_mat.return_list()
-        self.Q2 = Q2_mat.return_list()
+        self.QA = QA_mat.return_list()
+        self.QB = QB_mat.return_list()
 
         del(Id)
         del(SIG1)
-        del(Q1_mat)
-        del(Q2_mat)
+        del(QA_mat)
+        del(QB_mat)
 
         # Current matrix elements
         # units: e x hbar/(m a_0), fundamental unit of current
@@ -212,15 +213,15 @@ class MGridFunction:
         # Combining everything, in atomic units
 
         for alpha, J in zip(['x','y'],[self.J_x,self.J_y]):
-            for i, Qi in zip([0,1],[self.Q1,self.Q2]): 
+            for L, QL in zip(['A','B'],[self.QA,self.QB]): 
                 for n1 in [0,1]:
                     for n2 in [0,1]:
                         for n3 in [0,1]:
-                            key   = (alpha,i, n1,n2,n3)
+                            key   = (alpha,L, n1,n2,n3)
                             index = self.index_dictionary[key]
 
-                            self.M[index,0,:] = J[n1,n2]*self.g_nu_u[n2,n3]*Qi[n3,n1]
-                            self.M[index,1,:] = J[n1,n2]*self.g_nu_v[n2,n3]*Qi[n3,n1]
+                            self.M[index,0,:] = J[n1,n2]*self.g_nu_u[n2,n3]*QL[n3,n1]
+                            self.M[index,1,:] = J[n1,n2]*self.g_nu_v[n2,n3]*QL[n3,n1]
 
 
 
