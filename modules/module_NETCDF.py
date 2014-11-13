@@ -40,6 +40,7 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     # --- Create dimensions ----
     ncfile.createDimension("number_of_frequencies",CS.list_hw.shape[0])
     ncfile.createDimension("xy",2)
+    ncfile.createDimension("L",2)
     ncfile.createDimension("uv",2)
     ncfile.createDimension("phonon_alpha_kappa",6)
 
@@ -50,8 +51,8 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     IEPH   = ncfile.createVariable("Im_E_phonon",'d',('phonon_alpha_kappa',))
     HW     = ncfile.createVariable("list_hw",'d',('number_of_frequencies',))
 
-    RH     = ncfile.createVariable("Re_H",'d',('xy','uv','number_of_frequencies'))
-    IH     = ncfile.createVariable("Im_H",'d',('xy','uv','number_of_frequencies'))
+    RH     = ncfile.createVariable("Re_H",'d',('xy','L','uv','number_of_frequencies'))
+    IH     = ncfile.createVariable("Im_H",'d',('xy','L','uv','number_of_frequencies'))
 
 
     Q[:]    = CS.q
@@ -59,8 +60,8 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     IEPH[:] = N.imag(CS.E_ph)
     HW[:]   = N.real(CS.list_hw)
 
-    RH[:,:] = N.real(CS.Hq)
-    IH[:,:] = N.imag(CS.Hq)
+    RH[:,:,:,:] = N.real(CS.Hq)
+    IH[:,:,:,:] = N.imag(CS.Hq)
 
 
 
