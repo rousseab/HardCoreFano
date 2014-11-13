@@ -54,8 +54,9 @@ class Compute_Loop_Function:
         # Hq will be in fundamental units of [charge] x [velocity], e hbar / m a_0
 
         # first index   : alpha = x, y
-        # second index  : elph coupling parameters u, v
-        self.Hq = complex(0.,0.)*N.zeros([2, 2, self.nhw])
+        # second index  : L = 'A','B' the impurity scattering site index
+        # third index   : elph coupling parameters u, v
+        self.Hq = complex(0.,0.)*N.zeros([2, 2, 2, self.nhw])
         return
 
 
@@ -70,29 +71,32 @@ class Compute_Loop_Function:
             # Compute the I function, which contains frequency dependence
             Iq = IGridFunction(q_vector=self.q,list_hw=self.list_hw, delta_width=self.Gamma, mu=self.mu, beta=self.beta, wedge=wedge)
 
-            for i_alpha, alpha in zip([0,1],['x','y']):
-                for i in [0,1]:
-                    for n1 in [0,1]:
-                        for n2 in [0,1]:
-                            for n3 in [0,1]:
+            for n1 in [0,1]:
+                for n2 in [0,1]:
+                    for n3 in [0,1]:
 
-                                M_key = (alpha,i,n1,n2,n3)
+                        I_key = (n1,n2,n3)
+                        I_index = Iq.index_dictionary[I_key]
+                        # dimensions [nk,nw]
+                        IElements = Iq.I[I_index,:,:]
+
+                        for i_alpha, alpha in zip([0,1],['x','y']):
+                            for i_L, L in zip([0,1],['A','B']):
+
+
+                                M_key   = (alpha,L,n1,n2,n3)
                                 M_index = Mq.index_dictionary[M_key]
 
-                                I_key = (i,n1,n2,n3)
-                                I_index = Iq.index_dictionary[I_key]
 
                                 # dimension nk
                                 MatrixElements_u = Mq.M[M_index,0,:]
                                 MatrixElements_v = Mq.M[M_index,1,:]
 
-                                # dimensions [nk,nw]
-                                IElements = Iq.I[I_index,:,:]
 
                                 MI_u = MatrixElements_u[:,N.newaxis]*IElements 
                                 MI_v = MatrixElements_v[:,N.newaxis]*IElements 
 
-                                self.Hq[i_alpha,0,:] += self.normalization*AreaIntegrator(wedge,MI_u)
-                                self.Hq[i_alpha,1,:] += self.normalization*AreaIntegrator(wedge,MI_v)
+                                self.Hq[i_alpha,i_L, 0,:] += self.normalization*AreaIntegrator(wedge,MI_u)
+                                self.Hq[i_alpha,i_L, 1,:] += self.normalization*AreaIntegrator(wedge,MI_v)
 
         return
