@@ -223,7 +223,6 @@ class ICGridFunction:
                     key = (n1,n2,n3)
                     self.index_dictionary[key] = index
 
-
     def get_green_function_denominator(self, list_xi):
         """
         Produce a matrix of the form
@@ -239,13 +238,13 @@ class ICGridFunction:
         """
         Produce the tensor
         D [ nk, hw, iwm]
-        D = 1./( (iwm-xik)**2 - (hw+idelta)^2 ) 
+        D = (hw+idelta)/( (iwm-xik)**2 - (hw+idelta)^2 ) 
         """
 
         t1 = (self.iwm[N.newaxis,N.newaxis,:]-list_xi[:,N.newaxis,N.newaxis])**2
         t2 = self.z2[N.newaxis,:,N.newaxis]
 
-        D  = 1./(t1-t2)
+        D  = self.z[N.newaxis,:,N.newaxis]/(t1-t2)
 
         return D
 
