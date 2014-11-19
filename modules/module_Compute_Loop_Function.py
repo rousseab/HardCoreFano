@@ -17,7 +17,7 @@ from module_Integrators import *
 
 class Compute_Loop_Function:
 
-    def __init__(self, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid, external_list_hw, Gamma_width):
+    def __init__(self, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid, external_list_hw, Gamma_width, matsubara_cutoff_energy):
 
         self.mu      = mu
         self.beta    = beta
@@ -32,6 +32,10 @@ class Compute_Loop_Function:
 
         # Widths
         self.Gamma   = Gamma_width
+
+
+        # cutoff for the generation of the matrsubara frequencies
+        self.matsubara_cutoff_energy = matsubara_cutoff_energy
 
         # Normalization contains change of measure in going from sum to integral
         # on k, also sum on spin:
@@ -69,7 +73,8 @@ class Compute_Loop_Function:
             Mq = MGridFunction(q_vector=self.q,E_phonon_polarization=self.E_ph,hw_nu_q=self.hw_ph,wedge=wedge)
 
             # Compute the I function, which contains frequency dependence
-            Iq = IGridFunction(q_vector=self.q,list_hw=self.list_hw, delta_width=self.Gamma, mu=self.mu, beta=self.beta, wedge=wedge)
+            Iq = ICGridFunction(q_vector=self.q,list_hw=self.list_hw, delta_width=self.Gamma, mu=self.mu,  \
+                                    beta=self.beta, matsubara_grid_energy_cutoff=self.matsubara_cutoff_energy, wedge=wedge)
 
             for n1 in [0,1]:
                 for n2 in [0,1]:
@@ -92,7 +97,6 @@ class Compute_Loop_Function:
                                 MatrixElements_u = Mq.M[M_index,0,:]
                                 MatrixElements_v = Mq.M[M_index,1,:]
 
-
                                 MI_u = MatrixElements_u[:,N.newaxis]*IElements 
                                 MI_v = MatrixElements_v[:,N.newaxis]*IElements 
 
@@ -100,3 +104,4 @@ class Compute_Loop_Function:
                                 self.Hq[i_alpha,i_L, 1,:] += self.normalization*AreaIntegrator(wedge,MI_v)
 
         return
+
