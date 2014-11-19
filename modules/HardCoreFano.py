@@ -34,7 +34,7 @@ from module_Driver import *
 input_error   = False
 
 args = sys.argv[1:]
-if len(args) != 24:
+if len(args) != 25:
         input_error = True
 
 try:
@@ -49,24 +49,26 @@ try:
         hw_max = N.float(args[6])
         Gamma  = N.float(args[7])
 
-        hw_ph  = N.float(args[8])
-        q_ph1  = N.float(args[9])
-        q_ph2  = N.float(args[10])
+        matsubara_cutoff    = N.float(args[8])
 
-        re_E1x = N.float(args[11])
-        im_E1x = N.float(args[12])
-        re_E1y = N.float(args[13])
-        im_E1y = N.float(args[14])
-        re_E1z = N.float(args[15])
-        im_E1z = N.float(args[16])
+        hw_ph  = N.float(args[9])
+        q_ph1  = N.float(args[10])
+        q_ph2  = N.float(args[11])
 
-        re_E2x = N.float(args[17])
-        im_E2x = N.float(args[18])
-        re_E2y = N.float(args[19])
-        im_E2y = N.float(args[20])
-        re_E2z = N.float(args[21])
-        im_E2z = N.float(args[22])
-        filename = args[23]
+        re_E1x = N.float(args[12])
+        im_E1x = N.float(args[13])
+        re_E1y = N.float(args[14])
+        im_E1y = N.float(args[15])
+        re_E1z = N.float(args[16])
+        im_E1z = N.float(args[17])
+
+        re_E2x = N.float(args[18])
+        im_E2x = N.float(args[19])
+        re_E2y = N.float(args[20])
+        im_E2y = N.float(args[21])
+        re_E2z = N.float(args[22])
+        im_E2z = N.float(args[23])
+        filename = args[24]
 
 except:
         input_error   = True
@@ -83,6 +85,7 @@ if input_error:
         print '                n_hw          :     number of points on frequency grid'
         print '                hw_max        :     maximum frequency on frequency grid, in eV'
         print '                Gamma         :     Lifetime width, in eV'
+        print '          matsubara_cutoff    :     Cutoff energy for generation of fermionic Matsubara grid, in eV'
         print '                hw_ph         :     phonon energy, in eV'
         print '                q_ph          :     phonon q vector; two real numbers'
         print '                E_ph          :     phonon polarization vector; 12 real numbers (alternating real and imaginary part)'
@@ -118,7 +121,7 @@ list_hw      = d_hw*iloop
 #       Compute the Hq function 
 #================================================================================
 
-OkComputer = Compute_Loop_Function( mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, Gamma)
+OkComputer = Compute_Loop_Function( mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, Gamma, matsubara_cutoff)
 
 OkComputer.Compute_Hq()
 
