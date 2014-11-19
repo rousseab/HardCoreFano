@@ -82,7 +82,8 @@ from module_NETCDF         import *
 # useful commands
 #
 #================================================================================
-def build_command(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma,hw_ph,q_ph,E_ph,output_filename):
+def build_command(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma, \
+                        matsubara_cutoff,hw_ph,q_ph,E_ph,output_filename):
 
     command = [executable,
                '%8.4f'%mu,
@@ -93,6 +94,7 @@ def build_command(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_ma
                   '%i'%n_hw,
                '%8.4f'%hw_max,
                '%8.4f'%Gamma,
+               '%8.4f'%matsubara_cutoff,
              '%16.12f'%hw_ph,
              '%20.16f'%q_ph[0],
              '%20.16f'%q_ph[1],
@@ -112,7 +114,7 @@ def build_command(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_ma
 
     return command
 
-def build_string(mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma, hw_ph,q_ph,E_ph,output_filename):
+def build_string(mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma,matsubara_cutoff, hw_ph,q_ph,E_ph,output_filename):
 
     string =   '%8.4f '%mu+\
                '%8.2f '%T+\
@@ -122,6 +124,7 @@ def build_string(mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma, hw_
                   '%i '%n_hw+\
                '%8.4f '%hw_max+\
                '%8.4f '%Gamma+\
+               '%8.4f '%matsubara_cutoff+\
              '%16.12f '%hw_ph+\
              '%20.16f '%q_ph[0]+\
              '%20.16f '%q_ph[1]+\
