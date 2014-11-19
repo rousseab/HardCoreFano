@@ -230,7 +230,7 @@ class ICGridFunction:
         G[nk, iwm] = 1/(iwm- xi_k)
 
         """
-        G = complex(1.,0.)/(list_xi[:,N.newaxis]- self.gammaC[N.newaxis,:] )
+        G = complex(1.,0.)/(self.iwm[N.newaxis,:] - list_xi[:,N.newaxis])
 
         return G
 
