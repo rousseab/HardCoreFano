@@ -13,6 +13,61 @@ from module_Constants import *
 
 from Scientific.IO.NetCDF import NetCDFFile as Dataset
 
+def write_splmake(splmake_tuple,filename,mu,beta,delta):
+    """
+    Write the spline parameters to a netcdf file
+    """
+    #--------------------------------------------
+    # Write to netcdf file 
+    #--------------------------------------------
+    ncfile   = Dataset(filename,'w')
+
+    # --- set various attributes, identifying the parameters of the computation ----
+    setattr(ncfile,'mu',mu) 
+    setattr(ncfile,'beta',beta) 
+    setattr(ncfile,'delta',delta) 
+
+    setattr(ncfile,'d3',splmake_tuple[2]) 
+
+    # --- Create dimensions ----
+    d1 = splmake_tuple[0].shape[0]
+    d2 = splmake_tuple[1].shape[0]
+    ncfile.createDimension("d1",d1)
+    ncfile.createDimension("d2",d2)
+ 
+    D1 = ncfile.createVariable("array1",'d',('d1',))
+    D2 = ncfile.createVariable("array2",'d',('d2',))
+
+    D1[:]    = N.real(splmake_tuple[0])
+    D2[:]    = N.real(splmake_tuple[1])
+
+    ncfile.close()
+
+    return
+
+def read_splmake(filename):
+    """
+    Read the spline parameters from a netcdf file
+    """
+    #--------------------------------------------
+    # read to netcdf file 
+    #--------------------------------------------
+    ncfile   = Dataset(filename,'r')
+
+    file_mu     = ncfile.mu
+    file_beta   = ncfile.beta
+    file_delta  = ncfile.delta
+
+    d3 = ncfile.d3
+
+    D1 = ncfile.variables['array1'][:]
+    D2 = ncfile.variables['array2'][:]
+
+    splmake_tuple = (D1,D2,d3)
+
+    return splmake_tuple, file_mu, file_beta, file_delta
+
+
 def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     """
     Writes the results of a computation to a netcdf file.
@@ -67,3 +122,4 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
 
 
     ncfile.close()
+
