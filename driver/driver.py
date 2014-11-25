@@ -8,7 +8,7 @@ import os
 import time
 import subprocess as SUB
 
-top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_3.0/'
+top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/'
 
 sys.path.append(top_dir+'modules/')
 
@@ -39,6 +39,8 @@ nk_blocks_coarse_to_fine = 3
 k_include_Gamma = False
 
 Gamma         = 0.050 # meV
+
+matsubara_cutoff = 8. # eV
 
 n_hw   = 251
 hw_max = 0.250
@@ -126,9 +128,8 @@ for nu_index in list_nu_index:
         filename_plus  = filename_plus_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,iq_index,nu_index)
         filename_minus = filename_minus_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,iq_index,nu_index)
         
-        command_plus  = build_command(HCK,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,Gamma,hw_ph,q_ph1,E_ph1,filename_plus)
-
-        command_minus = build_command(HCK,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine,n_hw,hw_max,Gamma,hw_ph,q_ph2,E_ph2,filename_minus)
+        command_plus  = build_command(HCK,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,Gamma,matsubara_cutoff,hw_ph,q_ph1,E_ph1,filename_plus)
+        command_minus = build_command(HCK,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine,n_hw,hw_max,Gamma,matsubara_cutoff,hw_ph,q_ph2,E_ph2,filename_minus)
 
         for label, command in zip(['plus','minus'],[command_plus, command_minus]):
             # Take out finished jobs
