@@ -41,7 +41,7 @@ def get_gammaA(list_z):
     z-> infinity limit:
     gamma_inf (z) =- 2 pi (hvF)^2/D  z/D
 
-    Padé approximation of the leftover, to first order:
+    Pade approximation of the leftover, to first order:
     gamma_1   (z) =  2 pi (hvF)^2/D  ( 3x^3+2x)/(6x^4+3x^2+2),  x  = z/D
 
     gammaA = gamma_inf + gamma_1 
@@ -69,7 +69,6 @@ def get_gammaA(list_z):
 
     return gammaA
 
-
 def get_gammaC(list_z):
     """
     The "real" kernel function is given by
@@ -96,7 +95,7 @@ def get_gammaC(list_z):
 
     gamma = prefactor/denominator 
 
-    gammaC = gamma - gamma_A   
+    gammaC = gamma - gammaA   
 
     return gammaC
 

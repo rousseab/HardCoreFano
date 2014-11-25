@@ -97,7 +97,6 @@ class IGridFunction:
 
         return den
 
-
     def build_I(self,wedge):
         """
         All quantities are built here. It will be *crucial* to make
