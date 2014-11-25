@@ -39,11 +39,16 @@ class IGridFunction:
         self.delta_width = delta_width
         self.list_hw     = list_hw
         self.z           = list_hw+1j*delta_width
-        self.z2          = self.z**2
 
         self.mu  = mu
         self.beta= beta
 
+        # Create the scattering kernel object
+        self.SK = ScatteringKernel(self.mu,self.beta,self.delta_width)
+
+        # let's assume a default filename; read in the needed parametrs
+        filename ='scattering_spline.nc'
+        self.SK.read_spline_parameters(filename)
 
         self.build_indices()
 
@@ -61,7 +66,6 @@ class IGridFunction:
 
         self.build_I(wedge)
 
-
     def build_indices(self):
 
         self.index_dictionary = {}
@@ -74,15 +78,6 @@ class IGridFunction:
                     key = (n1,n2,n3)
                     self.index_dictionary[key] = index
 
-
-    def get_frequency_term(self, list_energy_difference):
-
-        de  = list_energy_difference[:,N.newaxis]
-        de2 = de**2
-
-        freq = -2.*self.z/(de2-self.z2)
-
-        return freq
 
     def cutoff_denominator(self, list_energy):
         """
@@ -106,47 +101,45 @@ class IGridFunction:
         list_k    = wedge.list_k
         list_kq   = list_k + self.q_vector
 
-        fk        = function_fk(list_k)
         eps_k     = function_epsilon_k(list_k)
 
         list_epsilon_k = [-eps_k, eps_k]
 
-        fkq       = function_fk(list_kq)
         eps_kq    = function_epsilon_k(list_kq)
-
         list_epsilon_kq = [-eps_kq, eps_kq]
 
-        list_Fk  = []
-        list_Fkq = []
+        list_Lk  = []
+        list_Lkq = []
+
         for epsilon_k, epsilon_kq in zip(list_epsilon_k,list_epsilon_kq):
+            list_Lk.append(self.SK.get_L(epsilon_k-self.mu)) 
+            list_Lkq.append(self.SK.get_L(epsilon_kq-self.mu)) 
 
-            list_Fk.append(function_fermi_occupation(epsilon_k,self.mu,self.beta))
-            list_Fkq.append(function_fermi_occupation(epsilon_kq,self.mu,self.beta))
+
+        for n2, epsilon2 in zip([0,1],list_epsilon_k):
+            for eta in [-1.,1.]:
+                L2 = self.SK.get_L(epsilon2[:,N.newaxis]-self.mu -eta*N.real(self.z[N.newaxis,:]))
+
+                for n1, espilon1, L1 in zip([0,1],list_epsilon_k, list_Lk):
+                    for n3, espilon3, L3 in zip([0,1],list_epsilon_kq, list_Lkq):
+
+                        key   = (n1,n2,n3)
+
+                        index = self.index_dictionary[key]
+
+                        den13 = self.cutoff_denominator(epsilon1-epsilon3)
+
+                        dxi12  = epsilon1-epsilon2
+                        dxi32  = epsilon3-epsilon2
+
+                        term12 = (L1[:,N.newaxis]-L2)/(dxi12[:,N.newaxis]+eta*(self.z[N.newaxis,:]))
+
+                        term32 = (L3[:,N.newaxis]-L2)/(dxi32[:,N.newaxis]+eta*(self.z[N.newaxis,:]))
+
+                        contribution = eta*(term12-term32)*den13[:,N.newaxis]
 
 
-        for n1, e1, f1 in zip([0,1],list_epsilon_k, list_Fk):
-
-            for n3, e3, f3 in zip([0,1],list_epsilon_kq, list_Fkq):
-                den13 = self.cutoff_denominator(e1-e3)
-
-                for n2, e2, f2 in zip([0,1],list_epsilon_k, list_Fk):
-
-                    g1 = get_gamma(e1)
-                    g3 = get_gamma(e3)
-
-                    key   = (n1,n2,n3)
-                    index = self.index_dictionary[key]
-
-                    freq12 = self.get_frequency_term(e1-e2)
-
-                    freq32 = self.get_frequency_term(e3-e2)
-
-                    fac12  = (f1-f2)*g1
-                    fac32  = (f3-f2)*g3
-
-                    numerator = fac12[:,N.newaxis]*freq12 -fac32[:,N.newaxis]*freq32
-
-                    self.I[index,:,:] = self.conversion_factor*den13[:,N.newaxis]*numerator 
+                        self.I[index,:,:] += self.conversion_factor*contribution
 
         return 
 
