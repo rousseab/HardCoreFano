@@ -46,7 +46,7 @@ class IGridFunction:
         # Create the scattering kernel object
         self.SK = ScatteringKernel(self.mu,self.beta,self.delta_width)
 
-        # let's assume a default filename; read in the needed parametrs
+        # let's assume a default filename; read in the needed parameters
         filename ='scattering_spline.nc'
         self.SK.read_spline_parameters(filename)
 
@@ -77,7 +77,6 @@ class IGridFunction:
                     index += 1 
                     key = (n1,n2,n3)
                     self.index_dictionary[key] = index
-
 
     def cutoff_denominator(self, list_energy):
         """
@@ -112,16 +111,31 @@ class IGridFunction:
         list_Lkq = []
 
         for epsilon_k, epsilon_kq in zip(list_epsilon_k,list_epsilon_kq):
-            list_Lk.append(self.SK.get_L(epsilon_k-self.mu)) 
-            list_Lkq.append(self.SK.get_L(epsilon_kq-self.mu)) 
+
+            xi_k = N.real(epsilon_k-self.mu)
+            xi_kq= N.real(epsilon_kq-self.mu)
+
+            # single argument to geT_L; 1D array
+            Lk  = complex(1.,0.)*self.SK.get_L(xi_k) 
+            Lkq = complex(1.,0.)*self.SK.get_L(xi_kq)
+
+            list_Lk.append(Lk)
+            list_Lkq.append(Lkq)
 
 
         for n2, epsilon2 in zip([0,1],list_epsilon_k):
-            for eta in [-1.,1.]:
-                L2 = self.SK.get_L(epsilon2[:,N.newaxis]-self.mu -eta*N.real(self.z[N.newaxis,:]))
 
-                for n1, espilon1, L1 in zip([0,1],list_epsilon_k, list_Lk):
-                    for n3, espilon3, L3 in zip([0,1],list_epsilon_kq, list_Lkq):
+            xi_2 = N.real(  epsilon2[:,N.newaxis]-self.mu )
+
+            for eta in [-1.,1.]:
+
+                eta_hw =  eta*N.real(self.z)
+
+                # 2 arguments to get_L; 2D array
+                L2 = complex(1.,0.)*self.SK.get_L( xi_2,eta_hw  )
+
+                for n1, epsilon1, L1 in zip([0,1],list_epsilon_k, list_Lk):
+                    for n3, epsilon3, L3 in zip([0,1],list_epsilon_kq, list_Lkq):
 
                         key   = (n1,n2,n3)
 
