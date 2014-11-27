@@ -85,7 +85,6 @@ class KramersKronig:
 
         return list_Fr_w 
 
-
 class KramersKronig_Gamma(KramersKronig):
 
     def __init__(self,list_hw,Gamma_width):
@@ -134,8 +133,6 @@ class KramersKronig_Gamma(KramersKronig):
             mgm1 = mg-complex(1.,0.)
 
             self.convolution_kernel = one_on_ipi*(mg1*(N.log(-mg)-N.log(-mg1))+mgm1*(N.log(mg)-N.log(mgm1)))
-
-
 
 class KramersKronig_KP(KramersKronig_Gamma):
     def generate_kernel(self):

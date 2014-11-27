@@ -115,9 +115,9 @@ class IGridFunction:
             xi_k = N.real(epsilon_k-self.mu)
             xi_kq= N.real(epsilon_kq-self.mu)
 
-            # single argument to geT_L; 1D array
-            Lk  = complex(1.,0.)*self.SK.get_L(xi_k) 
-            Lkq = complex(1.,0.)*self.SK.get_L(xi_kq)
+            # single argument to get_L; 1D array
+            Lk  = complex(1.,0.)*self.SK.get_L_oneD(xi_k) 
+            Lkq = complex(1.,0.)*self.SK.get_L_oneD(xi_kq)
 
             list_Lk.append(Lk)
             list_Lkq.append(Lkq)
@@ -125,14 +125,14 @@ class IGridFunction:
 
         for n2, epsilon2 in zip([0,1],list_epsilon_k):
 
-            xi_2 = N.real(  epsilon2[:,N.newaxis]-self.mu )
+            xi_2 = N.real(  epsilon2 - self.mu )
 
             for eta in [-1.,1.]:
 
                 eta_hw =  eta*N.real(self.z)
 
                 # 2 arguments to get_L; 2D array
-                L2 = complex(1.,0.)*self.SK.get_L( xi_2,eta_hw  )
+                L2 = complex(1.,0.)*self.SK.get_L_twoD( xi_2, eta_hw  )
 
                 for n1, epsilon1, L1 in zip([0,1],list_epsilon_k, list_Lk):
                     for n3, epsilon3, L3 in zip([0,1],list_epsilon_kq, list_Lkq):
@@ -146,12 +146,11 @@ class IGridFunction:
                         dxi12  = epsilon1-epsilon2
                         dxi32  = epsilon3-epsilon2
 
-                        term12 = (L1[:,N.newaxis]-L2)/(dxi12[:,N.newaxis]+eta*(self.z[N.newaxis,:]))
+                        term12 = (L1[:,N.newaxis]-L2)/(dxi12[:,N.newaxis]+eta*self.z[N.newaxis,:])
 
-                        term32 = (L3[:,N.newaxis]-L2)/(dxi32[:,N.newaxis]+eta*(self.z[N.newaxis,:]))
+                        term32 = (L3[:,N.newaxis]-L2)/(dxi32[:,N.newaxis]+eta*self.z[N.newaxis,:])
 
                         contribution = eta*(term12-term32)*den13[:,N.newaxis]
-
 
                         self.I[index,:,:] += self.conversion_factor*contribution
 

@@ -10,7 +10,6 @@
 from module_Constants import *
 
 
-
 from Scientific.IO.NetCDF import NetCDFFile as Dataset
 
 def write_splmake(splmake_tuple,filename,mu,beta,delta):
@@ -90,7 +89,9 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     setattr(ncfile,'n_blocks_coarse_to_fine',nblocks) 
     setattr(ncfile,'Gamma_width',CS.Gamma) 
     setattr(ncfile,'phonon_frequency',hw_ph) 
-    setattr(ncfile,'Matsubara_cutoff_energy',CS.matsubara_cutoff_energy) 
+
+    if hasattr(CS,'matsubara_cutoff_energy'):
+        setattr(ncfile,'Matsubara_cutoff_energy',CS.matsubara_cutoff_energy) 
 
 
     # --- Create dimensions ----

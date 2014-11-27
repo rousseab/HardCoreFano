@@ -36,6 +36,8 @@ def get_gamma(list_epsilon):
 
 def get_gammaA(list_z):
     """
+    THIS CODE IS OBSOLETE.
+
     The "real" kernel function is given by
 
         gamma(z) =  2 pi (hvF)^2/D ( D/z 1/ln[1-D^2/z^2])
@@ -66,17 +68,16 @@ def get_gammaA(list_z):
     x4= x3*x
     x5= x4*x
 
-
     numerator   = -x5
     denominator = complex(1.,0.)*x4+complex(0.5,0.)*x2+complex(1.,0.)/complex(3.,0)
 
-    gamma_A   = prefactor*numerator/denominator 
+    gammaA   = prefactor*numerator/denominator 
 
     return gammaA
 
-
 def get_gammaA_POLES_and_RESIDUES():
     """
+    THIS CODE IS OBSOLETE.
 
     gammaA = 2 pi (hvF)^2/D [-  x^5/(x^4 + 1/2 x^2 + 1/3)]
 
@@ -121,6 +122,8 @@ def get_gammaA_POLES_and_RESIDUES():
 
 def get_gammaC(list_z):
     """
+    THIS CODE IS OBSOLETE.
+
     The "real" kernel function is given by
 
         gamma(z) =  2 pi (hvF)^2/D ( D/z 1/ln[1-D^2/z^2])
@@ -150,18 +153,36 @@ def get_gammaC(list_z):
     return gammaC
 
 
+def get_gamma(list_z):
+    """
+
+    The "real" kernel function is given by
+
+        gamma(z) =  2 pi (hvF)^2/D ( D/z 1/ln[1-D^2/z^2])
+
+    This function is wildly non-analytic near zero. 
+
+    The argument of the function should always be offset by mu!
+
+    The returned value is in eV x a0^2
+    """
+
+    prefactor =  complex(1.,0.)*2.*N.pi*hvF**2/D_cutoff
+
+    x = complex(1.,0.)*list_z/D_cutoff
+    x2= x*x
+
+    denominator = x*N.log(complex(1.,0.)-complex(1.,0.)/x2)
+
+    gamma = prefactor/denominator 
+
+    return gamma
+
 class ScatteringKernel:
     """
-    This class will essentially produce the scattering kernel function L, which
-    can be decomposed as
+    This class will essentially produce the scattering kernel function L, which is given by
 
-    L(xi,hw)  = LA1(xi,hw) + LA2(xi,hw) + LC(xi,hw)
-
-    LA1(xi,hw) = sum_{i} R_i f(z_i-mu)/(z_i-mu-(xi-hw)),  {R_i,z_i} residues/poles of gamma_A
-
-    LA2(xi,hw) = f(xi) gammaA(xi+mu-hw) # Careful! hw does not appear in f()
-
-    LC(xi,hw) = f(xi-hw) KCR(xi+mu-hw) + i KramerKronig (KCI)(xi+mu-hw)
+    L(xi,nhw) = f(xi) KR(xi+mu-nhw) + i KramerKronig (KCI)(xi+mu-nhw)
 
     The Kramers-Kronig integral will be performed on a dense mesh, and a spline will be used
     to interpolate function to any desired value.
@@ -181,22 +202,11 @@ class ScatteringKernel:
         # broadening, to avoid singularities in scattering kernel
         self.delta = delta
 
-        # save the poles and residues gammaA
-        self.list_POLES, self.list_RESIDUES = get_gammaA_POLES_and_RESIDUES()
-
-        # this is the combination that will be used
-        self.ZA_mu = self.list_POLES-self.mu
-
-        # complex Fermi-Dirac
-        f = complex(1.,0.)/ ( N.exp(self.beta*self.ZA_mu)+complex(1.,0.) )
-
-        self.RAf = self.list_RESIDUES*f
 
     def build_scattering_kernel(self):
         """
         Compute the scattering kernel using the KK relation.            
         """
-
 
         # Hardcode these parameters for now.
 
@@ -211,30 +221,21 @@ class ScatteringKernel:
         # Prepare the Kramers-Kronig object
         KK = KramersKronig(list_u)
 
-        # Compute symmetric and anti-symmetric kernels
-        gC_plus    = get_gammaC(list_u+self.mu+1j*self.delta)
-        gC_minus   = get_gammaC(list_u+self.mu-1j*self.delta)
+        # Compute the anti-symmetric kernel
+        g_plus    = get_gamma(list_u+self.mu+1j*self.delta)
+        g_minus   = get_gamma(list_u+self.mu-1j*self.delta)
 
-        KCI = (gC_minus-gC_plus)/(2.*1j)
-        KCR = (gC_minus+gC_plus)/2.
+        KI = (g_minus-g_plus)/(2.*1j)
 
         # Compute the Fermi occupation factor. Note that the chemical potential should NOT be
         # passed to this function 
         f  = function_fermi_occupation(list_u,0.,self.beta)
 
-        # the symmetric part of the scattering kernel
-        #  Only take real part (imaginary part should be zero anyways) because
-        # the spline interpolation requires floats.
-        list_fKCR = N.real(f*KCR)
-
         # the integrand in the Kramers-Kronig integral
-        list_fKCI = f*KCI
+        list_fKI = f*KI
 
         # apply the Kramers-Kronig transformation to the anti-symmetric kernel
-        list_KK_fKCI = N.real(1j*KK.apply_kramers_kronig_FFT_convolution(list_fKCI))
-
-        # sum the two, as it appears some of the singularities present in each term ends up smoothed out in the sum
-        self.LC_kernel = list_fKCR + list_KK_fKCI
+        self.list_KK_fKI = N.real(1j*KK.apply_kramers_kronig_FFT_convolution(list_fKI))
         self.list_x    = list_u
 
     def build_and_write_spline_parameters(self,filename):
@@ -247,7 +248,7 @@ class ScatteringKernel:
         """
 
         # prepare the splne
-        self.splmake_tuple = splmake(self.list_x, self.LC_kernel )
+        self.splmake_tuple = splmake(self.list_x, self.list_KK_fKI )
         write_splmake(self.splmake_tuple,filename,self.mu,self.beta,self.delta)
 
     def read_spline_parameters(self,filename):
@@ -268,68 +269,74 @@ class ScatteringKernel:
 
         return
 
-    def get_LA1(self,list_xi,list_hw=None):
+    def get_LR_oneD(self,list_xi):
         """
-        Compute the LA1 contribution
+        Compute the contribution coming from the real kernel
         """
 
-        if list_hw == None:
-            u = list_xi
-        else:            
-            u = list_xi[:,N.newaxis]  - list_hw[N.newaxis,:]
+        f = function_fermi_occupation(list_xi,0.,self.beta)
 
-        LA1 =   self.RAf[0]/(self.ZA_mu[0]-u) +\
-                self.RAf[1]/(self.ZA_mu[1]-u) +\
-                self.RAf[2]/(self.ZA_mu[2]-u) +\
-                self.RAf[3]/(self.ZA_mu[3]-u)
+        # Compute the symmetric kernel
+        KR = N.real(get_gamma(list_xi+self.mu+1j*self.delta))
 
+        LR = complex(1.,0.)*f*KR    
 
-        return LA1
+        return LR
 
-    def get_LA2(self,list_xi,list_hw=None):
+    def get_LR_twoD(self,list_xi,list_eta_hw):
         """
-        Compute the LA2 contribution
+        Compute the contribution coming from the real kernel
         """
 
         fermi_dirac  = function_fermi_occupation(list_xi,0.,self.beta)
 
-        if list_hw == None:
-            u  = list_xi
-            f  = fermi_dirac
-        else:
-            u  = list_xi[:,N.newaxis] - list_hw[N.newaxis,:]
-            f  = fermi_dirac[:,N.newaxis]
+        u  = list_xi[:,N.newaxis] - list_eta_hw[N.newaxis,:] + self.mu
+        f  = fermi_dirac[:,N.newaxis]
 
-        gammaA = get_gammaA(u+self.mu )
+        KR = N.real( get_gamma(u+1j*self.delta) ) 
 
-        LA2 = f*gammaA
+        LR = complex(1.,0.)*f*KR
 
-        return LA2
+        return LR
 
-    def get_LC(self,list_xi,list_hw=None):
+    def get_LI_oneD(self,list_xi):
         """
-        Compute the gammaC contribution to the scattering kernel
+        Compute the contribution coming from the imaginary kernel
         """
 
         # evaluate spline            
-        if list_hw == None:
-            u = N.real ( list_xi )
-        else:            
-            u = N.real ( list_xi[:,N.newaxis]  - list_hw[N.newaxis,:] )
+        u = N.real ( list_xi )
 
-        LC = complex(1.,0.)*spleval(self.splmake_tuple, u)
+        LI = complex(1.,0.)*spleval(self.splmake_tuple, u)
 
-        return LC
+        return LI
 
-    def get_L(self,list_xi,list_hw=None):
+    def get_LI_twoD(self,list_xi,list_eta_hw):
+        """
+        Compute the contribution coming from the imaginary kernel
+        """
+        # evaluate spline            
+        u = N.real ( list_xi[:,N.newaxis]  - list_eta_hw[N.newaxis,:] )
+
+        LI = complex(1.,0.)*spleval(self.splmake_tuple, u)
+
+        return LI
+
+    def get_L_oneD(self,list_xi):
         """
         Compute the full contribution to the scattering kernel
         """
 
-        if list_hw == None:
-            L = self.get_LC(list_xi)+self.get_LA1(list_xi)+self.get_LA2(list_xi)
-        else:
-            L = self.get_LC(list_xi,list_hw)+self.get_LA1(list_xi,list_hw)+self.get_LA2(list_xi,list_hw)
+        L = self.get_LR_oneD(list_xi)+self.get_LI_oneD(list_xi)
+
+        return L
+
+    def get_L_twoD(self,list_xi,list_eta_hw):
+        """
+        Compute the full contribution to the scattering kernel
+        """
+
+        L = self.get_LR_twoD(list_xi,list_eta_hw)+self.get_LI_twoD(list_xi,list_eta_hw)
 
         return L
 

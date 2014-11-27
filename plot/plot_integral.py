@@ -76,6 +76,23 @@ ax3.plot(list_u,normalization*list_Fr,'r-',lw=lw,label='$L(f(\epsilon) K_C^I(\mu
 ax3.plot(list_u,normalization*list_FKR,'b-',lw=lw,label='$f(\epsilon) K_C^R(\mu+\epsilon)$')
 ax3.plot(list_u,normalization*(list_Fr+list_FKR),'g--',lw=lw,label='sum')
 
+
+SK = ScatteringKernel(mu,beta,delta)
+
+filename ='scattering_spline.nc'
+#SK.build_scattering_kernel()
+#SK.build_and_write_spline_parameters(filename)
+SK.read_spline_parameters(filename)
+
+list_xi = N.arange(-4*D_cutoff,4*D_cutoff,0.01)
+list_SK = SK.get_LC(list_xi)
+list_SK2 = SK.get_L(list_xi)
+
+#ax3.plot(SK.list_x,normalization*(SK.LC_kernel),'k--',lw=lw,label='CHECK')
+ax3.plot(list_xi,normalization*(list_SK),'k--',lw=lw,label='LC')
+ax3.plot(list_xi,normalization*(list_SK2),'b--',lw=lw,label='L')
+
+
 def integrand(y,x):
 
     fy = function_fermi_occupation(N.array([y]),0.,beta)
@@ -107,8 +124,6 @@ list_u_small = N.array(list_u_small)
 list_Fr_numerical = N.array(list_Fr_numerical)
 ax2.plot(list_u_small,normalization*list_Fr_numerical ,'g--',lw=lw,label='$L(f K_C^I)$')
 """
-
-
 
 
 
