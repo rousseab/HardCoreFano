@@ -13,21 +13,18 @@ from matplotlib.font_manager import  FontProperties
 
 import matplotlib.cm as cm
 
-mpl.rcParams['font.size'] = 50.
+mpl.rcParams['font.size'] = 16.
 legendfonts = FontProperties(size=16)
 
 #----------------------------------------
 # function
 #----------------------------------------
 
-def cutoff_denominator(list_x):
-
-    tol = 1e-3
-
+def cutoff_denominator(list_x,tol):
     z   = list_x/tol
 
     #den = N.imag(SS.wofz(list_x))/tol
-    den = N.imag(SS.wofz(z))/tol*N.sqrt(N.pi)
+    den = -1j*SS.wofz(z)/tol*N.sqrt(N.pi)
 
     return den
 
@@ -42,17 +39,31 @@ ax2  = fig.add_subplot(212)
 
 list_x = N.arange(-5,5,0.0011)
 
-f = cutoff_denominator(list_x)
-g = 1./list_x
 
-ax1.plot(list_x, f,'r-',lw=5)
-ax1.plot(list_x, g,'b--',lw=5)
-ax2.plot(list_x, list_x*f,'r-',lw=5)
-ax2.plot(list_x, list_x*g,'b--',lw=5)
 
-ax1.set_ylabel(r'1/x')
-ax1.set_ylim([-4,4])
+delta = 0.1
 
+
+f = cutoff_denominator(list_x,delta)
+
+g = 1./(list_x+1j*delta)
+
+ax1.plot(list_x, -N.imag(f),'r-',lw=5,label='Fadeeva')
+ax1.plot(list_x, -N.imag(g),'g--',lw=5,label='Lorentzian')
+#ax1.plot(list_x, g,'b--',lw=5)
+
+ax2.plot(list_x, N.real(f),'r-',lw=5)
+ax2.plot(list_x, N.real(g),'g--',lw=5)
+
+#ax2.plot(list_x, list_x*f,'r-',lw=5)
+#ax2.plot(list_x, list_x*g,'b--',lw=5)
+
+ax1.set_ylabel(r'-Im[$1/(x+i\delta)]$')
+ax2.set_ylabel(r'Re[$1/(x+i\delta)]$')
+#ax1.set_ylim([-4,4])
+
+
+ax1.legend(loc=0)
 ax1.grid(True,linestyle='-',color='grey', alpha=0.5)
 ax2.grid(True,linestyle='-',color='grey', alpha=0.5)
 

@@ -152,7 +152,6 @@ def get_gammaC(list_z):
 
     return gammaC
 
-
 def get_gamma(list_z):
     """
 

@@ -18,11 +18,29 @@ import matplotlib.cm as cm
 mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
 
-nmax_coarse = 8
-nmax_fine   = 32
-n_blocks_coarse_to_fine = 3
+nmax_coarse = 32
+nmax_fine   = 128
+n_blocks_coarse_to_fine = 5
 include_Gamma = True
+#include_Gamma = False
+
+
 grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma )
+
+mu = -0.400 # eV
+hw =  0.150 # eV
+
+dE_c = N.sqrt(grid.fx**2+grid.fy**2)/nmax_coarse*hvF
+dE_f = N.sqrt(grid.fx**2+grid.fy**2)/nmax_fine*hvF
+
+tf = grid.irreducible_wedge.triangles_indices[-1]
+print '# Energy resolution for the grid '
+print '#    sub-grid        hvF dk  (meV)'
+print '#---------------------------------'
+
+print '     coarse           %4.1f    '%(1000*dE_c)
+print '      fine            %4.1f    '%(1000*dE_f)
+
 
 fig = plt.figure(figsize=(10,10))
 
@@ -47,6 +65,35 @@ for i,wedge in enumerate(grid.list_wedges):
 
     ax.triplot(x,y,triangles=t)
     #ax.tripcolor(x,y,triangles=t,facecolors=fc)
+
+
+# Plot Fermi surface
+
+k_mu = N.abs(mu)/hvF
+k_hw = N.abs(hw)/hvF
+
+c = N.cos(N.pi/3.)
+s = N.sin(N.pi/3.)
+list_centers = N.array([ [-2./3.,0.], [ 2./3.,0.], 2./3.*N.array([c,s]), 
+                           2./3.*N.array([c,-s]), 2./3.*N.array([-c,s]), 2./3.*N.array([-c,-s])]) 
+
+rad_mu  = k_mu/twopia
+
+rad_mu_plus_hw  = (k_mu+k_hw)/twopia
+rad_mu_minus_hw = (k_mu-k_hw)/twopia
+
+th = N.arange(0.,2.*N.pi,0.01)
+for center in list_centers:
+
+    x = center[0]+rad_mu*N.cos(th)
+    y = center[1]+rad_mu*N.sin(th)
+    ax.plot(x, y,'k-',lw=2)
+
+    for rad in [rad_mu_plus_hw ,rad_mu_minus_hw ]: 
+        x = center[0]+rad*N.cos(th)
+        y = center[1]+rad*N.sin(th)
+        ax.plot(x, y,'r-',lw=2)
+
 
 
 FBZ_area = (2.*N.pi)**2/Area

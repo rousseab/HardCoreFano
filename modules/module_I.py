@@ -78,18 +78,66 @@ class IGridFunction:
                     key = (n1,n2,n3)
                     self.index_dictionary[key] = index
 
-    def cutoff_denominator(self, list_energy):
+    def cutoff_denominator(self,list_x,fadeeva_width):
         """
-        Compute 1/x, with a gaussian cutoff as we approach x=0. 
+        This function returns an approximation to 1/(x+i delta) using the Faddeeva function
         """
+        z   = list_x/fadeeva_width
 
-        tol = 1e-3
-
-        z   = list_energy/tol
-
-        den = N.imag(SS.wofz(z))/tol*N.sqrt(N.pi)
+        den = -1j*SS.wofz(z)/fadeeva_width*N.sqrt(N.pi)
 
         return den
+
+    def get_Y_smooth(self,list_xi, list_xi2, list_eta_hw):
+        """
+        This routine computes the "smooth" part of the Y function,
+
+        Y(xi1,xi2,eta_hw) =  ( L(xi1,0) -L(xi2-eta_hw, 0 ) ) / (xi1-[xi2-eta_hw]).
+
+        It is understood that as xi1 -> xi2-eta_hw, the function should remain smooth. 
+        Care must be taken to avoid singularities.
+
+        We'll assume that list_xi1 and list_xi2 have the same dimension [nk], and list_eta_hw is [nw]
+        """
+
+
+        L1  = self.SK.get_L_oneD(list_xi)[:,N.newaxis]
+
+        u   = list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:]
+
+        shape = u.shape
+
+        L2  =  self.SK.get_L_oneD(u.flatten()).reshape(shape)
+
+        numerator = L1-L2
+
+        denominator = list_xi[:,N.newaxis]-list_xi2[:,N.newaxis]+list_eta_hw[N.newaxis,:]
+
+
+        # Where the denominator is too close to zero, replace by value for argument close to zero.
+        tol = 1e-5
+
+        I,J = N.nonzero( N.abs(denominator) < tol)
+        
+        # substitute with safe value, to not divide by zero        
+        denominator[I,J] = 1.
+        Y_smooth = numerator/denominator
+
+        # replace by derivative 
+
+        L1_safe_plus  = self.SK.get_L_oneD(list_xi[I]+tol)
+        L1_safe_minus = self.SK.get_L_oneD(list_xi[I]-tol)
+
+        # note: u[I,J] is a 1D array, not a 2D array. This is because I and J are arrays, not slicing operators
+        
+        L2_safe_plus  = self.SK.get_L_oneD(u[I,J]+tol)
+        L2_safe_minus = self.SK.get_L_oneD(u[I,J]-tol)
+
+        # I'm not sure why this strange derivative works better, but I find that it does for tol large (for debugging)
+        Y_smooth[I,J] = 0.5*((L1_safe_plus+L2_safe_plus)-(L1_safe_minus+L2_safe_minus))/(2.*tol)
+
+
+        return Y_smooth
 
     def build_I(self,wedge):
         """
@@ -107,54 +155,79 @@ class IGridFunction:
         eps_kq    = function_epsilon_k(list_kq)
         list_epsilon_kq = [-eps_kq, eps_kq]
 
-        list_Lk  = []
-        list_Lkq = []
+        list_KR = []
+        for eta in [-1.,1.]:
 
-        for epsilon_k, epsilon_kq in zip(list_epsilon_k,list_epsilon_kq):
+            list_eta_hw =  eta*N.real(self.z)
 
-            xi_k = N.real(epsilon_k-self.mu)
-            xi_kq= N.real(epsilon_kq-self.mu)
-
-            # single argument to get_L; 1D array
-            Lk  = complex(1.,0.)*self.SK.get_L_oneD(xi_k) 
-            Lkq = complex(1.,0.)*self.SK.get_L_oneD(xi_kq)
-
-            list_Lk.append(Lk)
-            list_Lkq.append(Lkq)
+            list_KR.append( N.real( get_gamma(self.mu-list_eta_hw+1j*self.delta_width) ) )
 
 
-        for n2, epsilon2 in zip([0,1],list_epsilon_k):
 
-            xi_2 = N.real(  epsilon2 - self.mu )
+        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
 
-            for eta in [-1.,1.]:
+            list_xi2 = N.real(  list_epsilon2 - self.mu )
 
-                eta_hw =  eta*N.real(self.z)
+            delta_xi2 =  -N.imag ( self.cutoff_denominator(list_xi2,fadeeva_width=self.delta_width) )/N.pi
 
-                # 2 arguments to get_L; 2D array
-                L2 = complex(1.,0.)*self.SK.get_L_twoD( xi_2, eta_hw  )
+            for eta, KR in zip([-1.,1.],list_KR):
 
-                for n1, epsilon1, L1 in zip([0,1],list_epsilon_k, list_Lk):
-                    for n3, epsilon3, L3 in zip([0,1],list_epsilon_kq, list_Lkq):
+                list_eta_hw =  eta*N.real(self.z)
+
+                WKR = N.real(self.z)*KR
+
+                list_Y12 = []
+                list_Y32 = []
+
+                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+
+                    list_xi1 = N.real(  list_epsilon1 - self.mu )
+
+                    Y12 = self.get_Y_smooth(list_xi1, list_xi2, list_eta_hw)
+                    list_Y12.append(Y12)
+
+                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+
+                    list_xi3 = N.real(  list_epsilon3 - self.mu )
+
+                    Y32 = self.get_Y_smooth(list_xi3, list_xi2, list_eta_hw)
+                    list_Y32.append(Y32)
+
+
+                for n1, list_epsilon1, Y12 in zip([0,1],list_epsilon_k, list_Y12):
+
+                    list_xi1 = N.real(  list_epsilon1 - self.mu )
+
+                    if eta > 0.:
+                        den1 = self.cutoff_denominator(list_xi1[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width)
+                    else:
+                        den1 = N.conjugate( self.cutoff_denominator(list_xi1[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width) )
+
+                    for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
+
+                        list_xi3 = N.real(  list_epsilon3 - self.mu )
+
+                        if eta > 0.:
+                            den3 = self.cutoff_denominator(list_xi3[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width)
+                        else:
+                            den3 = N.conjugate( self.cutoff_denominator(list_xi3[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width) )
+
 
                         key   = (n1,n2,n3)
-
                         index = self.index_dictionary[key]
 
-                        den13 = self.cutoff_denominator(epsilon1-epsilon3)
+                        # cutoff the 1/0 
+                        den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
 
-                        dxi12  = epsilon1-epsilon2
-                        dxi32  = epsilon3-epsilon2
+                        smooth_contribution   = eta*den13[:,N.newaxis]*(Y12-Y32) 
 
-                        term12 = (L1[:,N.newaxis]-L2)/(dxi12[:,N.newaxis]+eta*self.z[N.newaxis,:])
+                        singular_contribution = -delta_xi2[:,N.newaxis]*den1*den3*WKR[N.newaxis,:]
 
-                        term32 = (L3[:,N.newaxis]-L2)/(dxi32[:,N.newaxis]+eta*self.z[N.newaxis,:])
-
-                        contribution = eta*(term12-term32)*den13[:,N.newaxis]
-
-                        self.I[index,:,:] += self.conversion_factor*contribution
+                        # add the "smooth" part to the I function
+                        self.I[index,:,:] += self.conversion_factor*(smooth_contribution+singular_contribution)
 
         return 
+
 
 
 class ICGridFunction:
