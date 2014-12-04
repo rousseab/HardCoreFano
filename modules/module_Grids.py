@@ -15,6 +15,18 @@ def get_index(i,j):
     I = j*(j+1)/2+i
     return I
 
+class DummyWedge:
+    """
+    This is a container object which will simply
+    contain a list of k vectors. This class is
+    created to spoof code which expects a wedge
+    object, but only use the list_k.
+    """
+
+    def __init__(self,list_k):
+        self.list_k = list_k
+
+
 class Wedge:
     """
     This is a container class which stores the 
@@ -64,6 +76,8 @@ class TesselationGrid:
         fx = fy/N.sqrt(3.)
 
         self.irreducible_wedge = self.generate_irreducible_Wedge(nx_gridsize,fx,fy)
+
+
         self.generate_list_wedges()
 
     def generate_list_wedges(self):
@@ -87,8 +101,6 @@ class TesselationGrid:
             wedge = Wedge(list_k,triangles_indices)
 
             self.list_wedges.append(wedge)
-
-
 
     def generate_irreducible_Wedge(self,nx_gridsize,fx,fy):
         """
@@ -141,7 +153,6 @@ class TesselationGrid:
 
         return irreducible_wedge 
 
-
     def get_symmetries(self):
         theta = N.pi/3.
         # Identity
@@ -183,7 +194,6 @@ class TesselationGrid:
         self.list_D6 = N.array([ E, C6_1, C6_2, C3_1, C3_2, C2, C2p_1, C2p_2, C2p_3, C2pp_1, C2pp_2, C2pp_3])
 
 
-
 class TesselationDoubleGrid(TesselationGrid):
     """
     This class generates and stores a k-grid which is consistent
@@ -193,7 +203,7 @@ class TesselationDoubleGrid(TesselationGrid):
     zone are generated.
     """
 
-    def __init__(self,nx_gridsize_coarse, nx_gridsize_fine, n_blocks_coarse_to_fine, include_Gamma):
+    def __init__(self,nx_gridsize_coarse, nx_gridsize_fine, n_blocks_coarse_to_fine, include_Gamma,clip_grid=False,clip_energy=0.):
 
 
         # Test various parameters to make sure they are sound
@@ -220,6 +230,43 @@ class TesselationDoubleGrid(TesselationGrid):
         self.nx_gridsize_fine   = self.fraction*nx_gridsize_fine
 
         self.irreducible_wedge = self.generate_irreducible_Wedge_double_grid()
+
+        if clip_grid:
+            # Remove all k-points and coresponding triangles if their cone energy is
+            # larger than the cutoff 
+            fy = N.sqrt(3.)/3*twopia # 
+            fx = fy/N.sqrt(3.)
+
+            # identify the relevant K point 
+            K_point = N.array([fx,fy]) 
+
+            # let's find all the k-points which satisfy the energy condition
+            energies = hvF*N.sqrt(N.sum((self.irreducible_wedge.list_k-K_point)**2,axis=1))
+
+            # create an array called "map" which be used to re-index the triangle indices array
+            # once we've gotten rid of k points. Let's put NaN in there, to make sure we'll have
+            # an error if the algorithm doesn't work as expected
+            map = N.nan*N.ones(len(energies))
+
+            indices_good_k = N.where( energies <=  clip_energy )[0]
+
+            # this array will be used to reorder the triangle indices
+            map[indices_good_k] = N.arange(len(indices_good_k))
+
+            # use a boolean array to identify good k points, through their "old" indices
+            truth_table = False*N.ones(len(energies),dtype=bool)
+            truth_table[indices_good_k] = True 
+
+            truth_triangle = truth_table[self.irreducible_wedge.triangles_indices]
+            truth_triangle = truth_triangle[:,0]*truth_triangle[:,1]*truth_triangle[:,2]
+
+            indices_good_triangles = N.where(truth_triangle)[0]
+
+            # subsitute the arrays inside the wedge
+            self.irreducible_wedge.list_k           = self.irreducible_wedge.list_k[indices_good_k]
+            self.irreducible_wedge.Jacobians        = self.irreducible_wedge.Jacobians[indices_good_triangles]
+            self.irreducible_wedge.cross_products   = self.irreducible_wedge.cross_products[indices_good_triangles]
+            self.irreducible_wedge.triangles_indices= N.array(map[self.irreducible_wedge.triangles_indices[indices_good_triangles]],dtype=int)
 
 
         self.generate_list_wedges()
