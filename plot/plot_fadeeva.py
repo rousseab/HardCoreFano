@@ -43,12 +43,11 @@ list_x = N.arange(-5,5,0.0011)
 
 delta = 0.1
 
-
 f = cutoff_denominator(list_x,delta)
 
 g = 1./(list_x+1j*delta)
 
-ax1.plot(list_x, -N.imag(f),'r-',lw=5,label='Fadeeva')
+ax1.plot(list_x, -N.imag(f),'r-',lw=5,label='Fadeeva, $\delta$ = %3.2f'%delta)
 ax1.plot(list_x, -N.imag(g),'g--',lw=5,label='Lorentzian')
 #ax1.plot(list_x, g,'b--',lw=5)
 

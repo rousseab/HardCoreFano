@@ -64,7 +64,7 @@ T  = 300 # K
 beta = 1./(kB*T)
 
 mu = -0.4
-list_delta = [-0.05,0.05]
+list_delta = [-0.05,0.025,0.05]
 x = N.arange(-0.8*D,0.8*D,0.01)
 
 

@@ -19,7 +19,7 @@ mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
 
 
-path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_3.0/modules/'
+path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/modules/'
 
 list_R, list_FC  =  build_force_constants_Dubay_using_symmetry()
 Renormalizor = CompteMauriRenormalize(path,list_FC,list_R)
@@ -36,42 +36,39 @@ hw_nu_q               = list_hw[nu]
 print 'nu = %i'%nu
 print 'q  = ( %8.4f,  %8.4f)'%(q_vector[0],q_vector[1])
 
-nmax = 5
-grid = TesselationGrid(nmax)
+#nmax = 5
+#grid = TesselationGrid(nmax)
 
+nmax_coarse = 8
+nmax_fine   = 32
+n_blocks_coarse_to_fine = 1
+include_Gamma = True
 
-fig = plt.figure(figsize=(10,10))
-
-ax  = fig.add_subplot(111)
-ax.set_xlabel('$k_x$ ($2\pi/a$)')
-ax.set_ylabel('$k_y$ ($2\pi/a$)')
+grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma )
 
 
 for i,wedge in enumerate(grid.list_wedges):
 
-	M_plus  = MGridFunction(q_vector,E_phonon_polarization ,hw_nu_q, wedge)
-	M_minus = MGridFunction(-q_vector,N.conjugate(E_phonon_polarization), hw_nu_q, wedge)
+    M_plus  = MGridFunction(q_vector,E_phonon_polarization ,hw_nu_q, wedge)
+    M_minus = MGridFunction(-q_vector,N.conjugate(E_phonon_polarization), hw_nu_q, wedge)
 
 
-	if i == 0:
-		list_k = wedge.list_k
+    if i == 0:
+        list_k = wedge.list_k
 
-		list_M_plus = N.transpose(M_plus.M,(2,0,1))
-		list_M_minus= N.transpose(M_minus.M,(2,0,1))
+        list_M_plus = N.transpose(M_plus.M,(2,0,1))
+        list_M_minus= N.transpose(M_minus.M,(2,0,1))
 
+        list_J_x_plus = N.transpose(M_plus.J_x,(2,0,1))
+        list_J_x_minus= N.transpose(M_minus.J_x,(2,0,1))
+    else:
+        list_k = N.concatenate([list_k,wedge.list_k])
 
-		list_J_x_plus = N.transpose(M_plus.J_x,(2,0,1))
-		list_J_x_minus= N.transpose(M_minus.J_x,(2,0,1))
-	else:
-		list_k = N.concatenate([list_k,wedge.list_k])
+        list_M_plus = N.concatenate([list_M_plus ,N.transpose(M_plus.M,(2,0,1))])
+        list_M_minus= N.concatenate([list_M_minus,N.transpose(M_minus.M,(2,0,1))])
 
-		list_M_plus = N.concatenate([list_M_plus ,N.transpose(M_plus.M,(2,0,1))])
-		list_M_minus= N.concatenate([list_M_minus,N.transpose(M_minus.M,(2,0,1))])
-
-		list_J_x_plus = N.concatenate([list_J_x_plus ,N.transpose(M_plus.J_x,(2,0,1))])
-		list_J_x_minus= N.concatenate([list_J_x_minus,N.transpose(M_minus.J_x,(2,0,1))])
-
-
+        list_J_x_plus = N.concatenate([list_J_x_plus ,N.transpose(M_plus.J_x,(2,0,1))])
+        list_J_x_minus= N.concatenate([list_J_x_minus,N.transpose(M_minus.J_x,(2,0,1))])
 
 
 # Find the k and minus k
@@ -81,35 +78,39 @@ list_i_minus = []
 
 tol = 1e-12
 for i, kplus in  enumerate(list_k):
-	list_i_plus.append(i)
+    list_i_plus.append(i)
 
-	for j, kminus in enumerate(list_k):
-		if N.linalg.norm(kplus+kminus) < tol:
-			list_i_minus.append(j)
-			# you have to break; the k points are 
-			# repeated! more than one solutions will be found
-			break
-
+    for j, kminus in enumerate(list_k):
+        if N.linalg.norm(kplus+kminus) < tol:
+            list_i_minus.append(j)
+            # you have to break; the k points are 
+            # repeated! more than one solutions will be found
+            break
 
 found_Error = False
 for ip, im in zip(list_i_plus,list_i_minus):
 
-	Mp = list_M_plus[ip]
-	Mm = list_M_minus[im]
+    Mp = list_M_plus[ip]
+    Mm = list_M_minus[im]
 
-	Jxp = list_J_x_plus[ip]
-	Jxm = list_J_x_minus[im]
+    Jxp = list_J_x_plus[ip]
+    Jxm = list_J_x_minus[im]
 
-	error = N.linalg.norm( Mp+N.conjugate(Mm) )
-	error_J = N.linalg.norm( Jxp+N.conjugate(Jxm) )
+    error = N.linalg.norm( Mp+N.conjugate(Mm) )
+    error_J = N.linalg.norm( Jxp+N.conjugate(Jxm) )
 
-	if error > 1e-12 or error_J > 1e-12:
-		print 'ERROR IN M SYMMETRY!'
+    if error > 1e-10:
+        print 'ERROR IN M SYMMETRY! error = %12.6e'%error
+        found_Error = True
 
-		found_Error = True
+    if error_J > 1e-10:
+        print 'ERROR IN J SYMMETRY! error = %12.6e'%error_J
+        found_Error = True
+
+
 
 
 if not found_Error:
-	print 'symmetries are respected'
+    print 'symmetries are respected'
 
 

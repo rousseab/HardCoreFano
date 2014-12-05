@@ -6,6 +6,7 @@ import common
 reload(common)
 from common import *
 
+import time
 #----------------------------------------
 # import modules
 #----------------------------------------
@@ -19,16 +20,33 @@ mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
 
 nmax_coarse = 32
-nmax_fine   = 128
+nmax_fine   = 192
 n_blocks_coarse_to_fine = 5
-include_Gamma = True
-#include_Gamma = False
 
+nmax_coarse = 8
+nmax_fine   = 512
+n_blocks_coarse_to_fine = 2
 
-grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma )
+#include_Gamma = True
+include_Gamma = False
 
 mu = -0.400 # eV
-hw =  0.150 # eV
+hw =  0.250 # eV
+
+
+clip_energy = N.abs(mu)+0.5 # eV
+
+#grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma )
+t1=time.time()
+grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma , \
+                                clip_grid=True,clip_energy=clip_energy)
+t2=time.time()
+print 'time: %12.4f'%(t2-t1)
+
+
+NK = 12*len(grid.list_wedges[0].list_k)
+
+print 'number of k vectors: %i'%NK
 
 dE_c = N.sqrt(grid.fx**2+grid.fy**2)/nmax_coarse*hvF
 dE_f = N.sqrt(grid.fx**2+grid.fy**2)/nmax_fine*hvF
@@ -50,7 +68,40 @@ ax.set_ylabel('$k_y$ ($2\pi/a$)')
 
 
 Integral = 0.
+
+
 for i,wedge in enumerate(grid.list_wedges):
+
+    """
+    # try to clip
+    fy = N.sqrt(3.)/3*twopia # 
+    fx = fy/N.sqrt(3.)
+    K_point = N.array([fx,fy]) 
+
+    energies = hvF*N.sqrt(N.sum((wedge.list_k-K_point)**2,axis=1))
+
+    map = N.nan*N.ones(len(energies))
+
+    I = N.where( energies <  clip_energy )[0]
+    map[I] = N.arange(len(I))
+
+    new_list_k = wedge.list_k[I]
+
+    truth_table = False*N.ones(len(energies),dtype=bool)
+    truth_table[I] = True 
+
+    truth_triangle = truth_table[wedge.triangles_indices]
+    truth_triangle = truth_triangle[:,0]*truth_triangle[:,1]*truth_triangle[:,2]
+
+    It = N.where(truth_triangle)[0]
+    new_Jacobians      = wedge.Jacobians[It]
+    new_cross_products = wedge.cross_products[It]
+
+    new_triangle_indices = N.array(map[wedge.triangles_indices[It]],dtype=int)
+    """
+
+    
+
 
     ones = N.ones(len(wedge.list_k))
     list_Fk = ones[:,N.newaxis]
@@ -82,12 +133,22 @@ rad_mu  = k_mu/twopia
 rad_mu_plus_hw  = (k_mu+k_hw)/twopia
 rad_mu_minus_hw = (k_mu-k_hw)/twopia
 
+
+rad_upper_limit = clip_energy/hvF/twopia
+
 th = N.arange(0.,2.*N.pi,0.01)
 for center in list_centers:
 
     x = center[0]+rad_mu*N.cos(th)
     y = center[1]+rad_mu*N.sin(th)
     ax.plot(x, y,'k-',lw=2)
+
+    x = center[0]+rad_upper_limit*N.cos(th)
+    y = center[1]+rad_upper_limit*N.sin(th)
+    ax.plot(x, y,'g--',lw=2)
+
+
+
 
     for rad in [rad_mu_plus_hw ,rad_mu_minus_hw ]: 
         x = center[0]+rad*N.cos(th)
