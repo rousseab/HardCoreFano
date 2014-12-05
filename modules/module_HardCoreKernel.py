@@ -177,6 +177,13 @@ def get_gamma(list_z):
 
     return gamma
 
+def get_KR(list_energies,delta_width):
+
+    KR = complex(1.,0.)*N.real( get_gamma(list_energies+1j*delta_width)) 
+
+    return KR
+
+
 class ScatteringKernel:
     """
     This class will essentially produce the scattering kernel function L, which is given by
