@@ -15,11 +15,11 @@ import socket
 hostname = socket.gethostname().split('.')[0]
 
 if hostname == 'ferron':
-        top_dir = '/Users/Shared/Bruno/work/projects/Graphene_Fano/python_work/HardCoreKernelFano/'
-elif hostname == 'briaree1':
-        top_dir = '/RQusagers/roussea4/python_depository/HCF/'
+    top_dir = '/Users/Shared/Bruno/work/projects/Graphene_Fano/python_work/HardCoreKernelFano/'
+elif hostname == 'MacBook-Pro-de-installation-3.local':
+    top_dir = '/RQusagers/roussea4/python_depository/HCF/'
 else:
-    top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/modules/'
+    top_dir = '/RQusagers/roussea4/python_depository/HCF_4.0/'
 
 
 sys.path.append(top_dir)
@@ -105,11 +105,12 @@ E_ph = N.array([ re_E1x +1j*im_E1x , re_E1y +1j*im_E1y , re_E1z +1j*im_E1z ,
 # Generate data!
 #================================================================================
 include_Gamma = False
-grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, nblock, include_Gamma )
 
+clip_energy = N.abs(mu)+0.5
+
+grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, nblock, include_Gamma,clip_grid=True,clip_energy=clip_energy)
 
 # We suppose that the grid is regular and goes from zero to hw_max.
-
 d_hw         = hw_max/(n_hw-1.)
 iloop        = N.arange(n_hw)
 list_hw      = d_hw*iloop
