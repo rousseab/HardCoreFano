@@ -192,14 +192,14 @@ class IGridFunction:
 
                     list_xi1 = N.real(  list_epsilon1 - self.mu )
 
-                    den12  = cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
+                    den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
 
 
                     for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
 
                         list_xi3 = N.real(  list_epsilon3 - self.mu )
 
-                        den32  = cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
+                        den32  = self.cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
 
                         key   = (n1,n2,n3)
                         index = self.index_dictionary[key]
