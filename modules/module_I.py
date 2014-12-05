@@ -155,26 +155,20 @@ class IGridFunction:
         eps_kq    = function_epsilon_k(list_kq)
         list_epsilon_kq = [-eps_kq, eps_kq]
 
-        list_KR = []
-        for eta in [-1.,1.]:
-
-            list_eta_hw =  eta*N.real(self.z)
-
-            list_KR.append( N.real( get_gamma(self.mu-list_eta_hw+1j*self.delta_width) ) )
-
-
 
         for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
 
             list_xi2 = N.real(  list_epsilon2 - self.mu )
 
-            delta_xi2 =  -N.imag ( self.cutoff_denominator(list_xi2,fadeeva_width=self.delta_width) )/N.pi
-
-            for eta, KR in zip([-1.,1.],list_KR):
+            for eta in [-1.,1.]:
 
                 list_eta_hw =  eta*N.real(self.z)
 
-                WKR = N.real(self.z)*KR
+                KR = get_KR(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.delta_width)
+
+                Fermi2 = function_fermi_occupation(list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:],0.,self.beta)
+                Fermi1 = function_fermi_occupation(list_xi2[:,N.newaxis],0.,self.beta)
+                dFermi = Fermi2-Fermi1  
 
                 list_Y12 = []
                 list_Y32 = []
@@ -198,20 +192,14 @@ class IGridFunction:
 
                     list_xi1 = N.real(  list_epsilon1 - self.mu )
 
-                    if eta > 0.:
-                        den1 = self.cutoff_denominator(list_xi1[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width)
-                    else:
-                        den1 = N.conjugate( self.cutoff_denominator(list_xi1[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width) )
+                    den12  = cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
+
 
                     for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
 
                         list_xi3 = N.real(  list_epsilon3 - self.mu )
 
-                        if eta > 0.:
-                            den3 = self.cutoff_denominator(list_xi3[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width)
-                        else:
-                            den3 = N.conjugate( self.cutoff_denominator(list_xi3[:,N.newaxis]+list_eta_hw[N.newaxis,:],fadeeva_width=self.delta_width) )
-
+                        den32  = cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
 
                         key   = (n1,n2,n3)
                         index = self.index_dictionary[key]
@@ -221,13 +209,13 @@ class IGridFunction:
 
                         smooth_contribution   = eta*den13[:,N.newaxis]*(Y12-Y32) 
 
-                        singular_contribution = -delta_xi2[:,N.newaxis]*den1*den3*WKR[N.newaxis,:]
+                        singular_contribution = -eta*dFermi*den12*den32*KR
 
                         # add the "smooth" part to the I function
-                        self.I[index,:,:] += self.conversion_factor*(smooth_contribution+singular_contribution)
+                        #self.I[index,:,:] += self.conversion_factor*(smooth_contribution+singular_contribution)
+                        self.I[index,:,:] += self.conversion_factor*singular_contribution
 
         return 
-
 
 
 class ICGridFunction:
