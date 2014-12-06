@@ -85,9 +85,10 @@ from module_NETCDF         import *
 # useful commands
 #
 #================================================================================
-def build_command(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma,hw_ph,q_ph,E_ph,output_filename):
+def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma,hw_ph,q_ph,E_ph,output_filename):
 
     command = [executable,
+                  '%s'%type,
                '%8.4f'%mu,
                '%8.2f'%T,
                   '%i'%nk_max_coarse,
@@ -114,7 +115,6 @@ def build_command(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_ma
                   '%s'%output_filename]
 
     return command
-
 
 def build_command_imaginary(executable,mu,T,n_hw,hw_max,Gamma,hw_ph,q_ph,E_ph,output_filename):
 

@@ -30,7 +30,7 @@ class IGridFunction:
     we must multipy by conversion factor = Ha_to_eV
     """
 
-    def __init__(self,type_of_integral, q_vector,list_hw, delta_width, mu, beta, wedge):
+    def __init__(self, type_of_integral, q_vector,list_hw, delta_width, mu, beta, wedge):
 
 
         if type_of_integral == 'smooth':

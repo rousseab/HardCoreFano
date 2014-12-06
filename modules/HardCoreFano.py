@@ -34,40 +34,41 @@ from module_Driver import *
 input_error   = False
 
 args = sys.argv[1:]
-if len(args) != 24:
+if len(args) != 25:
         input_error = True
 
 try:
-        mu     = N.float(args[0])
-        T      = N.float(args[1])
+        type   = args[0]
+        mu     = N.float(args[1])
+        T      = N.float(args[2])
 
-        nmax_coarse   = N.int(args[2])
-        nmax_fine     = N.int(args[3])
-        nblock        = N.int(args[4])
+        nmax_coarse   = N.int(args[3])
+        nmax_fine     = N.int(args[4])
+        nblock        = N.int(args[5])
 
-        n_hw   = N.int(args[5])
-        hw_max = N.float(args[6])
-        Gamma  = N.float(args[7])
+        n_hw   = N.int(args[6])
+        hw_max = N.float(args[7])
+        Gamma  = N.float(args[8])
 
 
-        hw_ph  = N.float(args[8])
-        q_ph1  = N.float(args[9])
-        q_ph2  = N.float(args[10])
+        hw_ph  = N.float(args[9])
+        q_ph1  = N.float(args[10])
+        q_ph2  = N.float(args[11])
 
-        re_E1x = N.float(args[11])
-        im_E1x = N.float(args[12])
-        re_E1y = N.float(args[13])
-        im_E1y = N.float(args[14])
-        re_E1z = N.float(args[15])
-        im_E1z = N.float(args[16])
+        re_E1x = N.float(args[12])
+        im_E1x = N.float(args[13])
+        re_E1y = N.float(args[14])
+        im_E1y = N.float(args[15])
+        re_E1z = N.float(args[16])
+        im_E1z = N.float(args[17])
 
-        re_E2x = N.float(args[17])
-        im_E2x = N.float(args[18])
-        re_E2y = N.float(args[19])
-        im_E2y = N.float(args[20])
-        re_E2z = N.float(args[21])
-        im_E2z = N.float(args[22])
-        filename = args[23]
+        re_E2x = N.float(args[18])
+        im_E2x = N.float(args[19])
+        re_E2y = N.float(args[20])
+        im_E2y = N.float(args[21])
+        re_E2z = N.float(args[22])
+        im_E2z = N.float(args[23])
+        filename = args[24]
 
 except:
         input_error   = True
@@ -75,7 +76,8 @@ except:
 
 if input_error:
         print 'Something is wrong with input parameters!'
-        print 'HardCoreFano.py <mu> <T> <nk_grid_coarse> <nk_grid_fine> <nblocks> <n_hw> <hw_max> <Gamma> <hw_ph> <q_ph> <E_ph> <output_filename>'
+        print 'HardCoreFano.py <type of integral> <mu> <T> <nk_grid_coarse> <nk_grid_fine> <nblocks> <n_hw> <hw_max> <Gamma> <hw_ph> <q_ph> <E_ph> <output_filename>'
+        print '            type of integral  :     "smooth" or "singular": determines which integrand is considered; the grid is clipped if "singular" is chosen'
         print '                mu            :     chemical potential, in eV'
         print '                T             :     temperature, in Kelvin'
         print '                nk_grid_coarse:     parameter specifying how dense the coarse k-grid will be'
@@ -106,9 +108,14 @@ E_ph = N.array([ re_E1x +1j*im_E1x , re_E1y +1j*im_E1y , re_E1z +1j*im_E1z ,
 #================================================================================
 include_Gamma = False
 
-clip_energy = N.abs(mu)+0.5
-
-grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, nblock, include_Gamma,clip_grid=True,clip_energy=clip_energy)
+if type == 'smooth':
+    grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, nblock, include_Gamma,clip_grid=False,clip_energy=0.)
+elif type == 'singular':
+    clip_energy = N.abs(mu)+0.5
+    grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, nblock, include_Gamma,clip_grid=True,clip_energy=clip_energy)
+else:
+    print 'ERROR! type must be smooth or singular'
+    sys.exit()
 
 # We suppose that the grid is regular and goes from zero to hw_max.
 d_hw         = hw_max/(n_hw-1.)
@@ -120,7 +127,7 @@ list_hw      = d_hw*iloop
 #       Compute the Hq function 
 #================================================================================
 
-OkComputer = Compute_Loop_Function( mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, Gamma)
+OkComputer = Compute_Loop_Function(type, mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, Gamma)
 
 OkComputer.Compute_Hq()
 
