@@ -30,8 +30,17 @@ class IGridFunction:
     we must multipy by conversion factor = Ha_to_eV
     """
 
-    def __init__(self,q_vector,list_hw, delta_width, mu, beta, wedge):
+    def __init__(self,type_of_integral, q_vector,list_hw, delta_width, mu, beta, wedge):
 
+
+        if type_of_integral == 'smooth':
+            self.smooth   = True
+            self.singular = False
+        elif type_of_integral == 'singular':
+            self.smooth   = False
+            self.singular = True
+        else :
+            print 'ERROR! Pick a type of integral: smooth or singular'
 
         self.conversion_factor = Ha_to_eV
 
@@ -100,7 +109,6 @@ class IGridFunction:
         We'll assume that list_xi1 and list_xi2 have the same dimension [nk], and list_eta_hw is [nw]
         """
 
-
         L1  = self.SK.get_L_oneD(list_xi)[:,N.newaxis]
 
         u   = list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:]
@@ -140,6 +148,80 @@ class IGridFunction:
         return Y_smooth
 
     def build_I(self,wedge):
+
+        if self.smooth:
+            self.build_I_smooth(wedge)
+        elif self.singular:
+            self.build_I_singular(wedge)
+
+    def build_I_smooth(self,wedge):
+        """
+        All quantities are built here. It will be *crucial* to make
+        this code as transparent as possible, to avoid making mistakes!
+        """
+
+        list_k    = wedge.list_k
+        list_kq   = list_k + self.q_vector
+
+        eps_k     = function_epsilon_k(list_k)
+
+        list_epsilon_k = [-eps_k, eps_k]
+
+        eps_kq    = function_epsilon_k(list_kq)
+        list_epsilon_kq = [-eps_kq, eps_kq]
+
+
+        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
+
+            list_xi2 = N.real(  list_epsilon2 - self.mu )
+
+            for eta in [-1.,1.]:
+
+                list_eta_hw =  eta*N.real(self.z)
+
+                list_Y12 = []
+                list_Y32 = []
+
+                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+
+                    list_xi1 = N.real(  list_epsilon1 - self.mu )
+
+                    Y12 = self.get_Y_smooth(list_xi1, list_xi2, list_eta_hw)
+                    list_Y12.append(Y12)
+
+                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+
+                    list_xi3 = N.real(  list_epsilon3 - self.mu )
+
+                    Y32 = self.get_Y_smooth(list_xi3, list_xi2, list_eta_hw)
+                    list_Y32.append(Y32)
+
+
+                for n1, list_epsilon1, Y12 in zip([0,1],list_epsilon_k, list_Y12):
+
+                    list_xi1 = N.real(  list_epsilon1 - self.mu )
+
+
+                    for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
+
+                        list_xi3 = N.real(  list_epsilon3 - self.mu )
+
+
+                        key   = (n1,n2,n3)
+                        index = self.index_dictionary[key]
+
+                        # cutoff the 1/0 
+                        den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
+
+                        smooth_contribution = eta*den13[:,N.newaxis]*(Y12-Y32) 
+
+
+                        # add the "smooth" part to the I function
+                        self.I[index,:,:] += self.conversion_factor*smooth_contribution
+
+        return 
+
+    def build_I_singular(self,wedge):
         """
         All quantities are built here. It will be *crucial* to make
         this code as transparent as possible, to avoid making mistakes!
@@ -170,32 +252,14 @@ class IGridFunction:
                 Fermi1 = function_fermi_occupation(list_xi2[:,N.newaxis],0.,self.beta)
                 dFermi = Fermi2-Fermi1  
 
-                list_Y12 = []
-                list_Y32 = []
-
                 for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
-
-                    list_xi1 = N.real(  list_epsilon1 - self.mu )
-
-                    Y12 = self.get_Y_smooth(list_xi1, list_xi2, list_eta_hw)
-                    list_Y12.append(Y12)
-
-                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
-
-                    list_xi3 = N.real(  list_epsilon3 - self.mu )
-
-                    Y32 = self.get_Y_smooth(list_xi3, list_xi2, list_eta_hw)
-                    list_Y32.append(Y32)
-
-
-                for n1, list_epsilon1, Y12 in zip([0,1],list_epsilon_k, list_Y12):
 
                     list_xi1 = N.real(  list_epsilon1 - self.mu )
 
                     den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
 
 
-                    for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
+                    for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
 
                         list_xi3 = N.real(  list_epsilon3 - self.mu )
 
@@ -204,19 +268,12 @@ class IGridFunction:
                         key   = (n1,n2,n3)
                         index = self.index_dictionary[key]
 
-                        # cutoff the 1/0 
-                        den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
-
-                        smooth_contribution   = eta*den13[:,N.newaxis]*(Y12-Y32) 
-
                         singular_contribution = -eta*dFermi*den12*den32*KR
 
                         # add the "smooth" part to the I function
-                        #self.I[index,:,:] += self.conversion_factor*(smooth_contribution+singular_contribution)
                         self.I[index,:,:] += self.conversion_factor*singular_contribution
 
         return 
-
 
 class ICGridFunction:
     """
