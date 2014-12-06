@@ -36,14 +36,13 @@ list_nu_index = [2,3,4,5]
 nkmax_coarse =  8
 nkmax_fine   = 32
 nk_blocks_coarse_to_fine = 3
-k_include_Gamma = False
 
 Gamma         = 0.050 # meV
 
-matsubara_cutoff = 8. # eV
-
 n_hw   = 251
 hw_max = 0.250
+
+type_of_integral = 'smooth'
 
 #================================================================================
 # Phonon q point grid
@@ -56,8 +55,8 @@ mauri_filepath= path
 
 Renormalizor = CompteMauriRenormalize(mauri_filepath,list_FC,list_R)
 
-nqmax_coarse = 8
-nqmax_fine   =32
+nqmax_coarse =  8
+nqmax_fine   = 32
 nq_blocks_coarse_to_fine = 3
 q_include_Gamma = True
 Q_grid = TesselationDoubleGrid(nqmax_coarse, nqmax_fine, nq_blocks_coarse_to_fine,q_include_Gamma )
@@ -128,8 +127,8 @@ for nu_index in list_nu_index:
         filename_plus  = filename_plus_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,iq_index,nu_index)
         filename_minus = filename_minus_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,iq_index,nu_index)
         
-        command_plus  = build_command(HCK,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,Gamma,matsubara_cutoff,hw_ph,q_ph1,E_ph1,filename_plus)
-        command_minus = build_command(HCK,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine,n_hw,hw_max,Gamma,matsubara_cutoff,hw_ph,q_ph2,E_ph2,filename_minus)
+        command_plus  = build_command(HCK,type_of_integral,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,Gamma,hw_ph,q_ph1,E_ph1,filename_plus)
+        command_minus = build_command(HCK,type_of_integral,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine,n_hw,hw_max,Gamma,hw_ph,q_ph2,E_ph2,filename_minus)
 
         for label, command in zip(['plus','minus'],[command_plus, command_minus]):
             # Take out finished jobs
