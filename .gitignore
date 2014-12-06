@@ -1,5 +1,6 @@
 *.pyc
 *.nc
+source-tree.tar.bz2
 local_runs/
 from_Briaree/
 *.gz
