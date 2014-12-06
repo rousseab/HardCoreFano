@@ -30,12 +30,20 @@ max_processes = 4
 mu   =-0.400 # eV
 T    = 300.  # Kelvin
 
+kB   = 8.6173324e-5 # eV/K
+beta = 1./(kB*T)
+
+
 
 list_nu_index = [2,3,4,5]
 
 nkmax_coarse =  8
 nkmax_fine   = 32
 nk_blocks_coarse_to_fine = 3
+
+nqmax_coarse =  8
+nqmax_fine   = 32
+nq_blocks_coarse_to_fine = 3
 
 Gamma         = 0.050 # meV
 
@@ -55,12 +63,8 @@ mauri_filepath= path
 
 Renormalizor = CompteMauriRenormalize(mauri_filepath,list_FC,list_R)
 
-nqmax_coarse =  8
-nqmax_fine   = 32
-nq_blocks_coarse_to_fine = 3
 q_include_Gamma = True
 Q_grid = TesselationDoubleGrid(nqmax_coarse, nqmax_fine, nq_blocks_coarse_to_fine,q_include_Gamma )
-
 
 
 tol    = 1e-10
@@ -108,6 +112,13 @@ set_of_processes = set()
 work_dir = 'nq=%i_%i_%i_nk=%i_%i_%i_mu=%4.3f/'%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,mu)
 os.mkdir(work_dir )
 os.chdir(work_dir )
+
+# make the scattering kernel
+SK = ScatteringKernel(mu,beta,Gamma)
+kernel_filename ='scattering_spline.nc'
+SK.build_scattering_kernel()
+SK.build_and_write_spline_parameters(kernel_filename)
+
 
 for nu_index in list_nu_index:
     iq_index = 0
