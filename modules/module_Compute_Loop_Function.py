@@ -17,7 +17,9 @@ from module_Integrators import *
 
 class Compute_Loop_Function:
 
-    def __init__(self, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid, external_list_hw, Gamma_width):
+    def __init__(self, type_of_integral, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid, external_list_hw, Gamma_width):
+
+        self.type_of_integral = type_of_integral
 
         self.mu      = mu
         self.beta    = beta
@@ -59,7 +61,6 @@ class Compute_Loop_Function:
         self.Hq = complex(0.,0.)*N.zeros([2, 2, 2, self.nhw])
         return
 
-
     def Compute_Hq(self):
 
         # Loop on wedges in the 1BZ
@@ -69,7 +70,8 @@ class Compute_Loop_Function:
             Mq = MGridFunction(q_vector=self.q,E_phonon_polarization=self.E_ph,hw_nu_q=self.hw_ph,wedge=wedge)
 
             # Compute the I function, which contains frequency dependence
-            Iq = IGridFunction(q_vector=self.q,list_hw=self.list_hw, delta_width=self.Gamma, mu=self.mu, beta=self.beta,  wedge=wedge)
+            Iq = IGridFunction(type_of_integral=self.type_of_integral, q_vector=self.q,list_hw=self.list_hw, \
+                                delta_width=self.Gamma, mu=self.mu, beta=self.beta,  wedge=wedge)
 
             for n1 in [0,1]:
                 for n2 in [0,1]:
