@@ -102,8 +102,8 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     IEPH   = ncfile.createVariable("Im_E_phonon",'d',('phonon_alpha_kappa',))
     HW     = ncfile.createVariable("list_hw",'d',('number_of_frequencies',))
 
-    RHH    = ncfile.createVariable("Re_HH",'d',('number_of_frequencies'))
-    IHH    = ncfile.createVariable("Im_HH",'d',('number_of_frequencies'))
+    RHH    = ncfile.createVariable("Re_HH",'d',('number_of_frequencies',))
+    IHH    = ncfile.createVariable("Im_HH",'d',('number_of_frequencies',))
 
 
     Q[:]    = CS.q
