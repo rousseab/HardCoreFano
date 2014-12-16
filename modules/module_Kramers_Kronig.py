@@ -101,46 +101,44 @@ class KramersKronig_Gamma(KramersKronig):
 
         self.generate_kernel()
 
-        def generate_kernel(self):
-            self.build_convolution_kernel()
-            self.build_kernel()
+    def generate_kernel(self):
+        self.build_convolution_kernel()
+        self.build_kernel()
 
-        def build_convolution_kernel(self):
-            """
-            This subroutine computes the array "convolution_kernel" which contains the
-            appropriate information to perform the Kramers-Kronig integral
-            through a convolution.
+    def build_convolution_kernel(self):
+        """
+        This subroutine computes the array "convolution_kernel" which contains the
+        appropriate information to perform the Kramers-Kronig integral
+        through a convolution.
 
-            The discretized Kramers-Kronig integral can be expressed as
-            R_i = sum_{j} K_{ij} * I_j
+        The discretized Kramers-Kronig integral can be expressed as
+        R_i = sum_{j} K_{ij} * I_j
 
-            where the kernel K is actually of the form K_{ij} = k[i-j].
-            Thus, the sum can be preformed using a convolution, which can be 
-            peformed efficiently with FFT!
-            """
+        where the kernel K is actually of the form K_{ij} = k[i-j].
+        Thus, the sum can be preformed using a convolution, which can be 
+        peformed efficiently with FFT!
+        """
 
-            one_on_ipi = -1j/N.pi
+        one_on_ipi = -1j/N.pi
 
 
-            # Build the linear kernel in direct space
+        # Build the linear kernel in direct space
 
-            m_positive = N.arange(0,self.n_hw+1)
-            m_negative = N.arange(1-self.n_hw,0)
+        m_positive = N.arange(0,self.n_hw+1)
+        m_negative = N.arange(1-self.n_hw,0)
 
-            m    = N.concatenate([ m_positive , m_negative ])
-            mg   = m + 1j*self.gamma
-            mg1  = mg+complex(1.,0.)
-            mgm1 = mg-complex(1.,0.)
+        m    = N.concatenate([ m_positive , m_negative ])
+        mg   = m + 1j*self.gamma
+        mg1  = mg+complex(1.,0.)
+        mgm1 = mg-complex(1.,0.)
 
-            self.convolution_kernel = one_on_ipi*(mg1*(N.log(-mg)-N.log(-mg1))+mgm1*(N.log(mg)-N.log(mgm1)))
+        self.convolution_kernel = one_on_ipi*(mg1*(N.log(-mg)-N.log(-mg1))+mgm1*(N.log(mg)-N.log(mgm1)))
 
 class KramersKronig_KP(KramersKronig_Gamma):
     def generate_kernel(self):
         self.build_convolution_kernel()
         self.convolution_kernel = complex(0.,1.)*N.imag(self.convolution_kernel)
         self.build_kernel()
-
-
 
 class KramersKronig_Kd(KramersKronig_Gamma):
     def generate_kernel(self):

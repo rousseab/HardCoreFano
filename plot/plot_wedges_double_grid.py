@@ -19,9 +19,8 @@ import matplotlib.cm as cm
 mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
 
-"""
 nmax_coarse = 8
-nmax_fine   = 512
+nmax_fine   = 256
 n_blocks_coarse_to_fine = 2
 clip_grid = True
 """
@@ -29,6 +28,8 @@ nmax_coarse = 32
 nmax_fine   = 128
 n_blocks_coarse_to_fine = 8
 clip_grid = False
+"""
+
 
 #include_Gamma = True
 include_Gamma = False
@@ -73,37 +74,6 @@ Integral = 0.
 
 
 for i,wedge in enumerate(grid.list_wedges):
-
-    """
-    # try to clip
-    fy = N.sqrt(3.)/3*twopia # 
-    fx = fy/N.sqrt(3.)
-    K_point = N.array([fx,fy]) 
-
-    energies = hvF*N.sqrt(N.sum((wedge.list_k-K_point)**2,axis=1))
-
-    map = N.nan*N.ones(len(energies))
-
-    I = N.where( energies <  clip_energy )[0]
-    map[I] = N.arange(len(I))
-
-    new_list_k = wedge.list_k[I]
-
-    truth_table = False*N.ones(len(energies),dtype=bool)
-    truth_table[I] = True 
-
-    truth_triangle = truth_table[wedge.triangles_indices]
-    truth_triangle = truth_triangle[:,0]*truth_triangle[:,1]*truth_triangle[:,2]
-
-    It = N.where(truth_triangle)[0]
-    new_Jacobians      = wedge.Jacobians[It]
-    new_cross_products = wedge.cross_products[It]
-
-    new_triangle_indices = N.array(map[wedge.triangles_indices[It]],dtype=int)
-    """
-
-    
-
 
     ones = N.ones(len(wedge.list_k))
     list_Fk = ones[:,N.newaxis]

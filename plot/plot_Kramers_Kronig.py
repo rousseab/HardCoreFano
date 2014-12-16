@@ -23,13 +23,7 @@ iloop  = N.arange(n_hw)
 list_hw = hw_min+d_hw*iloop
 
 
-Gamma = 0.010 
-
 KK = KramersKronig(list_hw)
-#KK = KramersKronig_Gamma(list_hw,Gamma)
-
-#KKP = KramersKronig_KP(list_hw,Gamma)
-#KKd = KramersKronig_Kd(list_hw,Gamma)
 
 
 fig = plt.figure(figsize=(16,10))
@@ -47,13 +41,10 @@ ax3.set_title('Imaginary Part, Faddeeva')
 ax4.set_title('Real Part, Faddeeva')
 
 
-
 ax1.set_ylabel('Im[f$(\omega)$]')
-
 ax2.set_ylabel('Re[f$(\omega)$]')
 ax3.set_ylabel('Im[f$(\omega)$]')
 ax4.set_ylabel('Re[f$(\omega)$]')
-
 
 
 delta = 1.0
@@ -62,12 +53,9 @@ list_Fi_w_exact = -complex(0.,1.)*delta/(delta**2+list_hw**2)
 list_Fr_w_exact =  complex(1.,0.)*list_hw/(delta**2+list_hw**2)
 
 list_Fr_w   = KK.apply_kramers_kronig_FFT_convolution(list_Fi_w_exact)
-list_Fi_w   = KK.apply_kramers_kronig_FFT_convolution(list_Fr_w_exact)
 
-#list_Fi_w = KKd.apply_kramers_kronig_FFT_convolution(list_Fi_w_exact)
-#list_Fr_w = KKP.apply_kramers_kronig_FFT_convolution(list_Fi_w_exact)
 
-ax1.plot(list_hw,N.imag(list_Fi_w),'r-',lw=lw,label='Kramers-Kronig')
+#ax1.plot(list_hw,N.imag(list_Fi_w),'r-',lw=lw,label='Kramers-Kronig')
 ax1.plot(list_hw,N.imag(list_Fi_w_exact),'g--',lw=lw,label='exact')
 
 ax2.plot(list_hw,N.real(list_Fr_w),'r-',lw=lw,label='Kramers-Kronig')
@@ -79,13 +67,9 @@ list_Fi_w_exact  = 1j*N.imag(fad)
 list_Fr_w_exact  =  N.real(fad)
 
 
-#list_F_KK_w = KK.apply_kramers_kronig_FFT_convolution(list_Fi_w_exact)
-list_Fi_w = KK.apply_kramers_kronig_FFT_convolution(list_Fi_w_exact)
 list_Fr_w = KK.apply_kramers_kronig_FFT_convolution(list_Fi_w_exact)
 
-
-
-ax3.plot(list_hw,N.imag(list_Fi_w),'r-',lw=lw,label='Kramers-Kronig')
+#ax3.plot(list_hw,N.imag(list_Fi_w),'r-',lw=lw,label='Kramers-Kronig')
 ax3.plot(list_hw,N.imag(list_Fi_w_exact),'g--',lw=lw,label='exact')
 
 ax4.plot(list_hw,N.real(list_Fr_w),'r-',lw=lw,label='Kramers-Kronig')
@@ -97,7 +81,7 @@ for ax in list_ax:
         ax.grid(True,linestyle='-',color='grey',alpha=0.5)
         ax.set_xlabel('$\omega$')
 
-fig.suptitle('Testing Kramers-Kronig: $\Gamma$ = %4.3f'%Gamma)
+fig.suptitle('Testing Kramers-Kronig')
 
 ax1.legend( loc = 0, fancybox=True,shadow=True,  borderaxespad=0.)
 ax2.legend( loc = 0, fancybox=True,shadow=True,  borderaxespad=0.)

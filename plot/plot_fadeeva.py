@@ -39,27 +39,23 @@ ax2  = fig.add_subplot(212)
 
 list_x = N.arange(-5,5,0.0011)
 
+list_delta = [-0.1,0.1]
+list_colors = ['r','g']
+
+for delta,c  in zip(list_delta,list_colors):
+    f = cutoff_denominator(list_x,delta)
+
+    g = 1./(list_x+1j*delta)
+
+    ax1.plot(list_x, N.imag(f),c+'-',lw=5,label='Fadeeva, $\delta$ = %3.2f'%delta)
+    ax1.plot(list_x, N.imag(g),c+'--',lw=5,label='Lorentzian')
+
+    ax2.plot(list_x, N.real(f),c+'-',lw=5)
+    ax2.plot(list_x, N.real(g),c+'--',lw=5)
 
 
-delta = 0.1
-
-f = cutoff_denominator(list_x,delta)
-
-g = 1./(list_x+1j*delta)
-
-ax1.plot(list_x, -N.imag(f),'r-',lw=5,label='Fadeeva, $\delta$ = %3.2f'%delta)
-ax1.plot(list_x, -N.imag(g),'g--',lw=5,label='Lorentzian')
-#ax1.plot(list_x, g,'b--',lw=5)
-
-ax2.plot(list_x, N.real(f),'r-',lw=5)
-ax2.plot(list_x, N.real(g),'g--',lw=5)
-
-#ax2.plot(list_x, list_x*f,'r-',lw=5)
-#ax2.plot(list_x, list_x*g,'b--',lw=5)
-
-ax1.set_ylabel(r'-Im[$1/(x+i\delta)]$')
+ax1.set_ylabel(r'Im[$1/(x+i\delta)]$')
 ax2.set_ylabel(r'Re[$1/(x+i\delta)]$')
-#ax1.set_ylim([-4,4])
 
 
 ax1.legend(loc=0)

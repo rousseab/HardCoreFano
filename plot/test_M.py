@@ -20,7 +20,6 @@ legendfonts = FontProperties(size=16)
 
 
 path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/modules/'
-
 list_R, list_FC  =  build_force_constants_Dubay_using_symmetry()
 Renormalizor = CompteMauriRenormalize(path,list_FC,list_R)
 
@@ -61,6 +60,11 @@ for i,wedge in enumerate(grid.list_wedges):
 
         list_J_x_plus = N.transpose(M_plus.J_x,(2,0,1))
         list_J_x_minus= N.transpose(M_minus.J_x,(2,0,1))
+
+        list_J_y_plus = N.transpose(M_plus.J_y,(2,0,1))
+        list_J_y_minus= N.transpose(M_minus.J_y,(2,0,1))
+
+
     else:
         list_k = N.concatenate([list_k,wedge.list_k])
 
@@ -69,6 +73,9 @@ for i,wedge in enumerate(grid.list_wedges):
 
         list_J_x_plus = N.concatenate([list_J_x_plus ,N.transpose(M_plus.J_x,(2,0,1))])
         list_J_x_minus= N.concatenate([list_J_x_minus,N.transpose(M_minus.J_x,(2,0,1))])
+
+        list_J_y_plus = N.concatenate([list_J_y_plus ,N.transpose(M_plus.J_y,(2,0,1))])
+        list_J_y_minus= N.concatenate([list_J_y_minus,N.transpose(M_minus.J_y,(2,0,1))])
 
 
 # Find the k and minus k
@@ -96,16 +103,27 @@ for ip, im in zip(list_i_plus,list_i_minus):
     Jxp = list_J_x_plus[ip]
     Jxm = list_J_x_minus[im]
 
-    error = N.linalg.norm( Mp+N.conjugate(Mm) )
-    error_J = N.linalg.norm( Jxp+N.conjugate(Jxm) )
+    Jyp = list_J_y_plus[ip]
+    Jym = list_J_y_minus[im]
 
-    if error > 1e-10:
+
+    error_M = N.linalg.norm( Mp+N.conjugate(Mm) )
+    error_Jx= N.linalg.norm( Jxp+N.conjugate(Jxm) )
+    error_Jy= N.linalg.norm( Jyp+N.conjugate(Jym) )
+
+    if error_M > 1e-10:
         print 'ERROR IN M SYMMETRY! error = %12.6e'%error
         found_Error = True
 
-    if error_J > 1e-10:
-        print 'ERROR IN J SYMMETRY! error = %12.6e'%error_J
+    if error_Jx> 1e-10:
+        print 'ERROR IN Jx SYMMETRY! error = %12.6e'%error_Jx
         found_Error = True
+
+    if error_Jy> 1e-10:
+        print 'ERROR IN Jy SYMMETRY! error = %12.6e'%error_Jy
+        found_Error = True
+
+
 
 
 

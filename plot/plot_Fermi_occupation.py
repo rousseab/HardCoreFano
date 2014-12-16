@@ -51,10 +51,11 @@ for ax in list_ax:
     ax.legend(loc=0,fancybox=True,shadow=True)
 
 
-ax1.set_ylabel('$dF$')
+ax1.set_ylabel('$f(\\xi-\hbar\omega)-f(\\xi)$')
 
+fig1.suptitle('Difference in Fermi-Dirac occupation factors')
 # adjust the figure so that there is no wasted space
-fig1.subplots_adjust(   left    =   0.07,
+fig1.subplots_adjust(   left    =   0.12,
                         bottom  =   0.15,
                         right   =   0.95,
                         top     =   0.95,

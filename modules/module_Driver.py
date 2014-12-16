@@ -175,9 +175,10 @@ def build_command_matsubara_sum(executable,mu,T,nk_max_coarse, nk_max_fine, nblo
 
     return command
 
-def build_string(mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma, hw_ph,q_ph,E_ph,output_filename):
+def build_string(type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma, hw_ph,q_ph,E_ph,output_filename):
 
-    string =   '%8.4f '%mu+\
+    string =      '%s '%type+\
+               '%8.4f '%mu+\
                '%8.2f '%T+\
                   '%i '%nk_max_coarse+\
                   '%i '%nk_max_fine+\

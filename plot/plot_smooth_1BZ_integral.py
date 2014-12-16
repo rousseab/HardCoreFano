@@ -92,7 +92,7 @@ beta = 1./(kB*T)
 nmax_coarse = 32
 #nmax_fine   = 256
 nmax_fine   = 128
-n_blocks_coarse_to_fine = 8
+n_blocks_coarse_to_fine = 5
 #include_Gamma = True
 include_Gamma = False
 
@@ -115,12 +115,15 @@ SK = ScatteringKernel(mu,beta,delta_width)
 SK.read_spline_parameters(filename)
 
 
-
 K = 2./3.*twopia*N.array([1.,0.])
 
-q  = N.array([0.0250,0.045])*twopia
+q  = N.array([0.020,0.03])*twopia
 nq = N.linalg.norm(q)
 q_vec = q
+hatQ  = q/nq
+hatzQ = N.cross(N.array([0.,0.,1.]),hatQ)[:2]
+
+
 
 fig1 = plt.figure(figsize=(10,10))
 
@@ -248,7 +251,26 @@ for center in list_centers:
         x = center[0]+(rad_mu+eta*rad_hw)*N.cos(th)
         y = center[1]+(rad_mu+eta*rad_hw)*N.sin(th)
         for ax in list_ax:
-            ax.plot(x, y,'r-',lw=2)
+            ax.plot(x, y,'g--',lw=2)
+
+    for eta in [1]:
+        c = N.cos(th)
+        s = N.sin(th)
+        K = -nq/(2.*c)
+
+        indk = N.where( (K >= 0)*(hvF*K < 1.0) )[0]
+
+        K = K[indk]
+        c = c[indk]
+        s = s[indk]
+        check = N.sqrt(K**2+nq**2+2.*K*nq*c)-K
+
+        x = center[0]+K/twopia*(hatQ[0]*c+hatzQ[0]*s)
+        y = center[1]+K/twopia*(hatQ[1]*c+hatzQ[1]*s)
+        for ax in list_ax:
+            ax.plot(x, y,'r--',lw=2)
+
+
 
 
 print '  I          : %12.8e   %+12.8e j'%(N.real(Integral),N.imag(Integral))

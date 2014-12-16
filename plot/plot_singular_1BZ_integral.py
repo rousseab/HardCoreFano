@@ -22,8 +22,12 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import  FontProperties
 
 import matplotlib.cm as cm
+import matplotlib.ticker as ticker
 
-
+def fmt(x, pos):
+    a, b = '{:.2e}'.format(x).split('e')
+    b = int(b)
+    return r'${} \times 10^{{{}}}$'.format(a, b)
 
 mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
@@ -56,12 +60,14 @@ delta_width = 0.050 # eV
 
 K = 2./3.*twopia*N.array([1.,0.])
 
-q  = N.array([0.0250,0.045])*twopia
+q  = N.array([0.02,0.03])*twopia
 nq = N.linalg.norm(q)
 q_vec = q
+hatQ  = q/nq
+hatzQ = N.cross(N.array([0.,0.,1.]),hatQ)[:2]
 
-fig1 = plt.figure(figsize=(10,10))
-fig2 = plt.figure(figsize=(10,10))
+fig1 = plt.figure(figsize=(14,10))
+fig2 = plt.figure(figsize=(14,10))
 
 ax1 = fig1.add_subplot(111)
 ax2 = fig2.add_subplot(111)
@@ -169,12 +175,17 @@ cmax_im = N.max(list_cmax_im)
 for image in list_images_re:
     image.set_clim([cmin_re,cmax_re])
 
-axc_re = fig1.colorbar(image)
+axc_re = fig1.colorbar(image,format=ticker.FuncFormatter(fmt))
+
 
 for image in list_images_im:
     image.set_clim([cmin_im,cmax_im])
 
-axc_im = fig2.colorbar(image)
+axc_im = fig2.colorbar(image,format=ticker.FuncFormatter(fmt))
+
+
+axc_re.set_label(r'$a_0^2/Ha$')
+axc_im.set_label(r'$a_0^2/Ha$')
 
 # Plot Fermi surface
 
@@ -197,17 +208,22 @@ for center in list_centers:
         ax.plot(x, y,'k-',lw=2)
 
 
-    """
-    for eta in [-1,1]:
+    for eta in [-1.,1]:
         c = N.cos(th)
         s = N.sin(th)
         K = ((hw/hvF)**2-nq**2)/2./(nq*c-eta*hw/hvF)
 
-        x = center[0]+K/twopia*c
-        y = center[1]+K/twopia*s
+        indk = N.where( (K >= 0)*(hvF*K < 1.0) )[0]
+
+        K = K[indk]
+        c = c[indk]
+        s = s[indk]
+        check = N.sqrt(K**2+nq**2+2.*K*nq*c)-K-eta*hw/hvF
+
+        x = center[0]+K/twopia*(hatQ[0]*c+hatzQ[0]*s)
+        y = center[1]+K/twopia*(hatQ[1]*c+hatzQ[1]*s)
         for ax in list_ax:
-            ax.plot(x, y,'r-',lw=2)
-    """
+            ax.plot(x, y,'r--',lw=2)
 
 
 print '  I          : %12.8e   %+12.8e j'%(N.real(Integral),N.imag(Integral))
@@ -223,12 +239,15 @@ for ax in list_ax:
     fig1.gca().set_aspect('equal')
     fig2.gca().set_aspect('equal')
 
-fig1.suptitle('Real Integrand')
-fig2.suptitle('Imaginary Integrand')
+
+title = 'Singular $I$, q = (%3.2f, %3.2f) 2 $\pi/a$'%(q[0]/twopia,q[1]/twopia)
+
+fig1.suptitle(title+'\n Real Part')
+fig2.suptitle(title+'\n Imaginary Part')
 
 for fig in [fig1,fig2]:
-    fig.subplots_adjust(    left    =       0.20,
-                            bottom  =       0.20,
+    fig.subplots_adjust(    left    =       0.10,
+                            bottom  =       0.10,
                             right   =       0.90,
                             top     =       0.90,
                             wspace  =       0.20,
