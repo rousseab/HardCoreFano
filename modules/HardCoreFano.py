@@ -14,12 +14,11 @@ import socket
 
 hostname = socket.gethostname().split('.')[0]
 
-if hostname == 'ferron':
-    top_dir = '/Users/Shared/Bruno/work/projects/Graphene_Fano/python_work/HardCoreKernelFano/'
-elif hostname == 'MacBook-Pro-de-installation-3.local':
-    top_dir = '/RQusagers/roussea4/python_depository/HCF/'
+print hostname 
+if if 'mbpdeinllation' in hostname:
+    top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_5.0/'
 else:
-    top_dir = '/RQusagers/roussea4/python_depository/HCF_4.0/'
+    top_dir = '/RQusagers/roussea4/python_depository/HCF_5.0/'
 
 
 sys.path.append(top_dir)
@@ -34,7 +33,7 @@ from module_Driver import *
 input_error   = False
 
 args = sys.argv[1:]
-if len(args) != 25:
+if len(args) != 26:
         input_error = True
 
 try:
@@ -45,30 +44,30 @@ try:
         nmax_coarse   = N.int(args[3])
         nmax_fine     = N.int(args[4])
         nblock        = N.int(args[5])
+        n_hw                = N.int(args[6])
+        hw_max              = N.float(args[7])
+        delta_width         = N.float(args[8])
+        kernel_Gamma_width  = N.float(args[9])
 
-        n_hw   = N.int(args[6])
-        hw_max = N.float(args[7])
-        Gamma  = N.float(args[8])
 
+        hw_ph  = N.float(args[10])
+        q_ph1  = N.float(args[11])
+        q_ph2  = N.float(args[12])
 
-        hw_ph  = N.float(args[9])
-        q_ph1  = N.float(args[10])
-        q_ph2  = N.float(args[11])
+        re_E1x = N.float(args[13])
+        im_E1x = N.float(args[14])
+        re_E1y = N.float(args[15])
+        im_E1y = N.float(args[16])
+        re_E1z = N.float(args[17])
+        im_E1z = N.float(args[18])
 
-        re_E1x = N.float(args[12])
-        im_E1x = N.float(args[13])
-        re_E1y = N.float(args[14])
-        im_E1y = N.float(args[15])
-        re_E1z = N.float(args[16])
-        im_E1z = N.float(args[17])
-
-        re_E2x = N.float(args[18])
-        im_E2x = N.float(args[19])
-        re_E2y = N.float(args[20])
-        im_E2y = N.float(args[21])
-        re_E2z = N.float(args[22])
-        im_E2z = N.float(args[23])
-        filename = args[24]
+        re_E2x = N.float(args[19])
+        im_E2x = N.float(args[20])
+        re_E2y = N.float(args[21])
+        im_E2y = N.float(args[22])
+        re_E2z = N.float(args[23])
+        im_E2z = N.float(args[24])
+        filename = args[25]
 
 except:
         input_error   = True
@@ -85,7 +84,8 @@ if input_error:
         print '                nblocks       :     parameter specifying how many coarse blocks will be made fine'
         print '                n_hw          :     number of points on frequency grid'
         print '                hw_max        :     maximum frequency on frequency grid, in eV'
-        print '                Gamma         :     Lifetime width, in eV'
+        print '                delta_width   :     width for delta-functions, in eV'
+        print '           kernel_Gamma_width :     Broadening used in the scattering kernel function, in eV'
         print '                hw_ph         :     phonon energy, in eV'
         print '                q_ph          :     phonon q vector; two real numbers'
         print '                E_ph          :     phonon polarization vector; 12 real numbers (alternating real and imaginary part)'
@@ -127,8 +127,8 @@ list_hw      = d_hw*iloop
 #       Compute the Hq function 
 #================================================================================
 
-OkComputer = Compute_Loop_Function(type, mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, Gamma)
+OkComputer = Compute_Loop_Function_Product(type, mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, kernel_Gamma_width, delta_width)
 
-OkComputer.Compute_Hq()
+OkComputer.Compute_Hq_Product()
 
 write_to_file(OkComputer, nmax_coarse, nmax_fine, nblock, hw_ph, filename)
