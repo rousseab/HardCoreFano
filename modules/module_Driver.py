@@ -68,9 +68,9 @@ reload(module_Integrators)
 from module_Integrators    import *
 
 
-import module_Compute_Loop_Function
-reload(module_Compute_Loop_Function)
-from module_Compute_Loop_Function import *
+import module_Compute_Loop_Function_Product
+reload(module_Compute_Loop_Function_Product)
+from module_Compute_Loop_Function_Product import *
 
 import module_Kramers_Kronig
 reload(module_Kramers_Kronig)
@@ -85,7 +85,8 @@ from module_NETCDF         import *
 # useful commands
 #
 #================================================================================
-def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma,hw_ph,q_ph,E_ph,output_filename):
+def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,delta_width, \
+                        kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
     command = [executable,
                   '%s'%type,
@@ -96,7 +97,8 @@ def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,
                   '%i'%nblocks,
                   '%i'%n_hw,
                '%8.4f'%hw_max,
-               '%8.4f'%Gamma,
+               '%8.4f'%delta_width,
+               '%8.4f'%kernel_Gamma_width,
              '%16.12f'%hw_ph,
              '%20.16f'%q_ph[0],
              '%20.16f'%q_ph[1],
@@ -116,66 +118,12 @@ def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,
 
     return command
 
-def build_command_imaginary(executable,mu,T,n_hw,hw_max,Gamma,hw_ph,q_ph,E_ph,output_filename):
 
-    command = [executable,
-               '%8.4f'%mu,
-               '%8.2f'%T,
-                  '%i'%n_hw,
-               '%8.4f'%hw_max,
-               '%8.4f'%Gamma,
-             '%16.12f'%hw_ph,
-             '%20.16f'%q_ph[0],
-             '%20.16f'%q_ph[1],
-             '%20.16f'%N.real(E_ph[0]),
-             '%20.16f'%N.imag(E_ph[0]),
-             '%20.16f'%N.real(E_ph[1]),
-             '%20.16f'%N.imag(E_ph[1]),
-             '%20.16f'%N.real(E_ph[2]),
-             '%20.16f'%N.imag(E_ph[2]),
-             '%20.16f'%N.real(E_ph[3]),
-             '%20.16f'%N.imag(E_ph[3]),
-             '%20.16f'%N.real(E_ph[4]),
-             '%20.16f'%N.imag(E_ph[4]),
-             '%20.16f'%N.real(E_ph[5]),
-             '%20.16f'%N.imag(E_ph[5]),
-                  '%s'%output_filename]
 
-    return command
 
-def build_command_matsubara_sum(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma, \
-                        matsubara_cutoff,hw_ph,q_ph,E_ph,output_filename):
 
-    command = [executable,
-               '%8.4f'%mu,
-               '%8.2f'%T,
-                  '%i'%nk_max_coarse,
-                  '%i'%nk_max_fine,
-                  '%i'%nblocks,
-                  '%i'%n_hw,
-               '%8.4f'%hw_max,
-               '%8.4f'%Gamma,
-               '%8.4f'%matsubara_cutoff,
-             '%16.12f'%hw_ph,
-             '%20.16f'%q_ph[0],
-             '%20.16f'%q_ph[1],
-             '%20.16f'%N.real(E_ph[0]),
-             '%20.16f'%N.imag(E_ph[0]),
-             '%20.16f'%N.real(E_ph[1]),
-             '%20.16f'%N.imag(E_ph[1]),
-             '%20.16f'%N.real(E_ph[2]),
-             '%20.16f'%N.imag(E_ph[2]),
-             '%20.16f'%N.real(E_ph[3]),
-             '%20.16f'%N.imag(E_ph[3]),
-             '%20.16f'%N.real(E_ph[4]),
-             '%20.16f'%N.imag(E_ph[4]),
-             '%20.16f'%N.real(E_ph[5]),
-             '%20.16f'%N.imag(E_ph[5]),
-                  '%s'%output_filename]
-
-    return command
-
-def build_string(type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma, hw_ph,q_ph,E_ph,output_filename):
+def build_string(type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,delta_width,\
+                kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
     string =      '%s '%type+\
                '%8.4f '%mu+\
@@ -185,7 +133,8 @@ def build_string(type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma
                   '%i '%nblocks+\
                   '%i '%n_hw+\
                '%8.4f '%hw_max+\
-               '%8.4f '%Gamma+\
+               '%8.4f '%delta_width+\
+               '%8.4f '%kernel_Gamma_width+\
              '%16.12f '%hw_ph+\
              '%20.16f '%q_ph[0]+\
              '%20.16f '%q_ph[1]+\
@@ -204,36 +153,4 @@ def build_string(type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma
                   '%s '%output_filename
 
     return string
-
-
-def build_string_matsubara_sum(mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,Gamma,matsubara_cutoff, hw_ph,q_ph,E_ph,output_filename):
-
-    string =   '%8.4f '%mu+\
-               '%8.2f '%T+\
-                  '%i '%nk_max_coarse+\
-                  '%i '%nk_max_fine+\
-                  '%i '%nblocks+\
-                  '%i '%n_hw+\
-               '%8.4f '%hw_max+\
-               '%8.4f '%Gamma+\
-               '%8.4f '%matsubara_cutoff+\
-             '%16.12f '%hw_ph+\
-             '%20.16f '%q_ph[0]+\
-             '%20.16f '%q_ph[1]+\
-             '%20.16f '%N.real(E_ph[0])+\
-             '%20.16f '%N.imag(E_ph[0])+\
-             '%20.16f '%N.real(E_ph[1])+\
-             '%20.16f '%N.imag(E_ph[1])+\
-             '%20.16f '%N.real(E_ph[2])+\
-             '%20.16f '%N.imag(E_ph[2])+\
-             '%20.16f '%N.real(E_ph[3])+\
-             '%20.16f '%N.imag(E_ph[3])+\
-             '%20.16f '%N.real(E_ph[4])+\
-             '%20.16f '%N.imag(E_ph[4])+\
-             '%20.16f '%N.real(E_ph[5])+\
-             '%20.16f '%N.imag(E_ph[5])+\
-                  '%s '%output_filename
-
-    return string
-
 
