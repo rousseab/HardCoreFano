@@ -30,7 +30,7 @@ class IGridFunction:
     we must multipy by conversion factor = Ha_to_eV
     """
 
-    def __init__(self, type_of_integral, q_vector,list_hw, delta_width, mu, beta, wedge):
+    def __init__(self, type_of_integral, q_vector,list_hw, delta_width, kernel_Gamma_width, mu, beta, wedge):
 
 
         if type_of_integral == 'smooth':
@@ -47,13 +47,15 @@ class IGridFunction:
         self.q_vector    = q_vector
         self.delta_width = delta_width
         self.list_hw     = list_hw
-        self.z           = list_hw+1j*delta_width
+
+
+        self.kernel_Gamma_width = kernel_Gamma_width
 
         self.mu  = mu
         self.beta= beta
 
         # Create the scattering kernel object
-        self.SK = ScatteringKernel(self.mu,self.beta,self.delta_width)
+        self.SK = ScatteringKernel(self.mu,self.beta,self.kernel_Gamma_width)
 
         # let's assume a default filename; read in the needed parameters
         filename ='scattering_spline.nc'
@@ -101,7 +103,7 @@ class IGridFunction:
         """
         This routine computes the "smooth" part of the Y function,
 
-        Y(xi1,xi2,eta_hw) =  ( L(xi1,0) -L(xi2-eta_hw, 0 ) ) / (xi1-[xi2-eta_hw]).
+        Y(xi,xi2,eta_hw) =  ( L(xi,0) -L(xi2-eta_hw, 0 ) ) / (xi-[xi2-eta_hw]).
 
         It is understood that as xi1 -> xi2-eta_hw, the function should remain smooth. 
         Care must be taken to avoid singularities.
@@ -123,7 +125,7 @@ class IGridFunction:
 
 
         # Where the denominator is too close to zero, replace by value for argument close to zero.
-        tol = 1e-5
+        tol = 1e-6
 
         I,J = N.nonzero( N.abs(denominator) < tol)
         
@@ -143,7 +145,6 @@ class IGridFunction:
 
         # I'm not sure why this strange derivative works better, but I find that it does for tol large (for debugging)
         Y_smooth[I,J] = 0.5*((L1_safe_plus+L2_safe_plus)-(L1_safe_minus+L2_safe_minus))/(2.*tol)
-
 
         return Y_smooth
 
@@ -177,7 +178,7 @@ class IGridFunction:
 
             for eta in [-1.,1.]:
 
-                list_eta_hw =  eta*N.real(self.z)
+                list_eta_hw =  eta*self.list_hw
 
                 list_Y12 = []
                 list_Y32 = []
@@ -244,9 +245,9 @@ class IGridFunction:
 
             for eta in [-1.,1.]:
 
-                list_eta_hw =  eta*N.real(self.z)
+                list_eta_hw =  eta*self.list_hw
 
-                KR = get_KR(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.delta_width)
+                KR = get_KR(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.kernel_Gamma_width)
 
                 Fermi2 = function_fermi_occupation(list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:],0.,self.beta)
                 Fermi1 = function_fermi_occupation(list_xi2[:,N.newaxis],0.,self.beta)
