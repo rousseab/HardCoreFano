@@ -92,6 +92,7 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
 
     # --- Create dimensions ----
     ncfile.createDimension("number_of_frequencies",CS.list_hw.shape[0])
+    ncfile.createDimension("xy",2)
     ncfile.createDimension("phonon_alpha_kappa",6)
 
 
