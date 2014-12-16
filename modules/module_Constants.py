@@ -82,6 +82,5 @@ me_M     = electron_mass/carbon_mass
 
 # Values fitted from the literature
 u_a0    = (2.80 + 3.47)/2. # eV; average value from GW results of Mauri et al.
-#u_a0    = 3.47 # eV; average value from GW results of Mauri et al.
-v_a0    = 5.4   # eV; from Nanotube calculations..
+v_a0    = 0.0   # eV
 

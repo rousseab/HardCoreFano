@@ -119,9 +119,6 @@ def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,
     return command
 
 
-
-
-
 def build_string(type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,delta_width,\
                 kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
