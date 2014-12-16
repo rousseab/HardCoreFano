@@ -160,7 +160,7 @@ class ScatteringKernel:
         f = function_fermi_occupation(list_xi,0.,self.beta)
 
         # Compute the symmetric kernel
-        KR = get_KR(list_xi,self.kernel_Gamma_width)
+        KR = get_KR(list_xi+self.mu,self.kernel_Gamma_width)
 
         LR = complex(1.,0.)*f*KR    
 
