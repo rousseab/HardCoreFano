@@ -66,11 +66,10 @@ def read_splmake(filename):
 
     return splmake_tuple, file_mu, file_beta, file_delta
 
-
 def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     """
     Writes the results of a computation to a netcdf file.
-    Takes a Compute_Loop_Function object as input; it is assumed that 
+    Takes a Compute_Loop_Function_Product object as input; it is assumed that 
     this object has already computed what we wish to write!
     """
 
@@ -90,15 +89,8 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     setattr(ncfile,'Gamma_width',CS.Gamma) 
     setattr(ncfile,'phonon_frequency',hw_ph) 
 
-    if hasattr(CS,'matsubara_cutoff_energy'):
-        setattr(ncfile,'Matsubara_cutoff_energy',CS.matsubara_cutoff_energy) 
-
-
     # --- Create dimensions ----
     ncfile.createDimension("number_of_frequencies",CS.list_hw.shape[0])
-    ncfile.createDimension("xy",2)
-    ncfile.createDimension("L",2)
-    ncfile.createDimension("uv",2)
     ncfile.createDimension("phonon_alpha_kappa",6)
 
 
@@ -108,8 +100,8 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     IEPH   = ncfile.createVariable("Im_E_phonon",'d',('phonon_alpha_kappa',))
     HW     = ncfile.createVariable("list_hw",'d',('number_of_frequencies',))
 
-    RH     = ncfile.createVariable("Re_H",'d',('xy','L','uv','number_of_frequencies'))
-    IH     = ncfile.createVariable("Im_H",'d',('xy','L','uv','number_of_frequencies'))
+    RHH    = ncfile.createVariable("Re_HH",'d',('number_of_frequencies'))
+    IHH    = ncfile.createVariable("Im_HH",'d',('number_of_frequencies'))
 
 
     Q[:]    = CS.q
@@ -117,9 +109,8 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     IEPH[:] = N.imag(CS.E_ph)
     HW[:]   = N.real(CS.list_hw)
 
-    RH[:,:,:,:] = N.real(CS.Hq)
-    IH[:,:,:,:] = N.imag(CS.Hq)
-
+    RHH[:] = N.real(CS.HqHq)
+    IHH[:] = N.imag(CS.HqHq)
 
 
     ncfile.close()
