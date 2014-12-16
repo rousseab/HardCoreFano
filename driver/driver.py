@@ -8,7 +8,7 @@ import os
 import time
 import subprocess as SUB
 
-top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/'
+top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_5.0/'
 
 sys.path.append(top_dir+'modules/')
 
@@ -33,8 +33,6 @@ T    = 300.  # Kelvin
 kB   = 8.6173324e-5 # eV/K
 beta = 1./(kB*T)
 
-
-
 list_nu_index = [2,3,4,5]
 
 nkmax_coarse =  8
@@ -45,7 +43,8 @@ nqmax_coarse =  8
 nqmax_fine   = 32
 nq_blocks_coarse_to_fine = 3
 
-Gamma         = 0.050 # meV
+kernel_Gamma_width  = 0.050 # meV
+delta_width         = 0.050 # meV
 
 n_hw   = 251
 hw_max = 0.250
@@ -64,45 +63,40 @@ mauri_filepath= path
 Renormalizor = CompteMauriRenormalize(mauri_filepath,list_FC,list_R)
 
 q_include_Gamma = True
+
 Q_grid = TesselationDoubleGrid(nqmax_coarse, nqmax_fine, nq_blocks_coarse_to_fine,q_include_Gamma )
+
+
+
+Q_wedge = Q_grid.list_wedges[0]
+list_q  = []
 
 
 tol    = 1e-10
 
+for k in Q_wedge.list_k:
 
-list_plus_q  = []
-list_minus_q = []
-for wedge in  Q_grid.list_wedges:
+    new = True
 
-        for k in wedge.list_k:
+    list_dq = N.array(list_q)-k
 
-                new = True
+    distances = N.sqrt(N.sum(list_dq**2 ,axis=1))
 
-                for q1, q2 in zip(list_plus_q, list_minus_q):
+    if distances.min() < tol:
+        new = False
 
-                        test1 = N.linalg.norm(k-q1) < tol
-                        test2 = N.linalg.norm(k-q2) < tol
-                        if test1 or test2:
-                                new = False
-                                break
+    if new:
+        list_q.append(k)
 
-                if new:
-                        list_plus_q.append(k)
-                        list_minus_q.append(-k)
+list_q  = N.array(list_q)
 
-list_plus_q  = N.array(list_plus_q)
-list_minus_q = N.array(list_minus_q)
-
-
-number_of_q_pairs = len(list_plus_q )
+number_of_q_vectors = len(list_q )
 
 #================================================================================
 # Generate data!
 #================================================================================
 
-filename_plus_template  = 'HCF_nq=%i_%i_%i_nk=%i_%i_%i_iq_plus=%i_nu=%i.nc'
-filename_minus_template = 'HCF_nq=%i_%i_%i_nk=%i_%i_%i_iq_minus=%i_nu=%i.nc'
-
+filename_template  = 'HCF_nq=%i_%i_%i_nk=%i_%i_%i_iq=%i_nu=%i.nc'
 
 log = open('calculation.log','w')
 
@@ -114,7 +108,7 @@ os.mkdir(work_dir )
 os.chdir(work_dir )
 
 # make the scattering kernel
-SK = ScatteringKernel(mu,beta,Gamma)
+SK = ScatteringKernel(mu,beta,kernel_Gamma_width)
 kernel_filename ='scattering_spline.nc'
 SK.build_scattering_kernel()
 SK.build_and_write_spline_parameters(kernel_filename)
@@ -122,44 +116,38 @@ SK.build_and_write_spline_parameters(kernel_filename)
 
 for nu_index in list_nu_index:
     iq_index = 0
-    for q_ph1, q_ph2 in  zip(list_plus_q,  list_minus_q):
+    for q_ph in  list_q:
 
         iq_index  += 1
-
-        list_hw_ph_NOT_RENORMALIZED, list_hw_ph, list_Eph= Renormalizor.get_frequency_and_polarization(q_ph1)
-
+        list_hw_ph_NOT_RENORMALIZED, list_hw_ph, list_Eph= Renormalizor.get_frequency_and_polarization(q_ph)
 
         hw_ph = list_hw_ph[nu_index]
+        E_ph  = list_Eph[:,nu_index]
 
-        E_ph1 = list_Eph[:,nu_index]
-        E_ph2 = N.conjugate(E_ph1)
-
-
-        filename_plus  = filename_plus_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,iq_index,nu_index)
-        filename_minus = filename_minus_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,iq_index,nu_index)
+        filename = filename_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,\
+                                        nk_blocks_coarse_to_fine,iq_index,nu_index)
         
-        command_plus  = build_command(HCK,type_of_integral,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,Gamma,hw_ph,q_ph1,E_ph1,filename_plus)
-        command_minus = build_command(HCK,type_of_integral,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine,n_hw,hw_max,Gamma,hw_ph,q_ph2,E_ph2,filename_minus)
+        command  = build_command(HCK,type_of_integral,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,\
+                                    delta_width,kernel_Gamma_width,hw_ph,q_ph1,E_ph1,filename_plus)
 
-        for label, command in zip(['plus','minus'],[command_plus, command_minus]):
-            # Take out finished jobs
-            while len(set_of_processes) >= max_processes:
+        # take out finished jobs
+        while len(set_of_processes) >= max_processes:
 
-                time.sleep(5)
-                set_of_finished_processes = set()
-                for job in set_of_processes:
-                    if job.poll() is not None:
-                        set_of_finished_processes.add(job)
+            time.sleep(2)
+            set_of_finished_processes = set()
+            for job in set_of_processes:
+                if job.poll() is not None:
+                    set_of_finished_processes.add(job)
 
-                set_of_processes.difference_update(set_of_finished_processes)
+            set_of_processes.difference_update(set_of_finished_processes)
 
 
-            print 'Doing nu =%i, iq_%s = %i of %i q-points pairs'%(nu_index,label,iq_index,number_of_q_pairs )
-            print >> log,'Doing nu =%i, iq_%s = %i of %i q-points pairs'%(nu_index,label,iq_index,number_of_q_pairs )
-            log.flush()
+        print 'Doing nu =%i, iq = %i of %i q-points'%(nu_index,iq_index,number_of_q_vectors)
+        print >> log,'Doing nu =%i, iq = %i of %i q-points'%(nu_index,iq_index,number_of_q_vectors)
+        log.flush()
 
-            job = SUB.Popen(command)
-            set_of_processes.add(job)
+        job = SUB.Popen(command)
+        set_of_processes.add(job)
 
 
 os.chdir('../')
