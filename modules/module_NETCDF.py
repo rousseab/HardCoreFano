@@ -86,7 +86,8 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     setattr(ncfile,'nmax_coarse',nmax_coarse) 
     setattr(ncfile,'nmax_fine',nmax_fine) 
     setattr(ncfile,'n_blocks_coarse_to_fine',nblocks) 
-    setattr(ncfile,'Gamma_width',CS.Gamma) 
+    setattr(ncfile,'delta_width',CS.delta_width) 
+    setattr(ncfile,'kernel_Gamma_width',CS.kernel_Gamma_width) 
     setattr(ncfile,'phonon_frequency',hw_ph) 
 
     # --- Create dimensions ----
