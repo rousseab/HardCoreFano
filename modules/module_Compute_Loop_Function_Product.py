@@ -70,10 +70,10 @@ class Compute_Loop_Function_Product:
 
 
         # compute the smooth grid contribution
-        self.Compute_Hq_Product_per_grid(self.grid_smooth)
+        self.Compute_Hq_Product_per_grid(self.grid_smooth,'smooth')
 
         # compute the singular grid contribution
-        self.Compute_Hq_Product_per_grid(self.grid_singular)
+        self.Compute_Hq_Product_per_grid(self.grid_singular,'singular')
 
         # Compute the averaged product of H(q,w) H(-q,w)
         self.HqHq = 0.25* ( self.Hq_plus[0,0, :]*self.Hq_minus[0,0, :] +
@@ -83,7 +83,7 @@ class Compute_Loop_Function_Product:
 
 
 
-    def Compute_Hq_Product_per_grid(self,grid):
+    def Compute_Hq_Product_per_grid(self,grid,type_of_integral):
 
         # Loop on wedges in the 1BZ
         for wedge in grid.list_wedges:
@@ -92,7 +92,7 @@ class Compute_Loop_Function_Product:
             Mq = MGridFunction(q_vector=self.q,E_phonon_polarization=self.E_ph,hw_nu_q=self.hw_ph,wedge=wedge)
 
             # Compute the I function, which contains frequency dependence
-            Iq = IGridFunction(type_of_integral=self.type_of_integral, q_vector=self.q,list_hw=self.list_hw, \
+            Iq = IGridFunction(type_of_integral=type_of_integral, q_vector=self.q,list_hw=self.list_hw, \
                                 delta_width=self.delta_width,kernel_Gamma_width=self.kernel_Gamma_width, \
                                 mu=self.mu, beta=self.beta,  wedge=wedge)
 
