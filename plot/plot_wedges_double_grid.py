@@ -30,9 +30,9 @@ nmax_fine   = 8
 n_blocks_coarse_to_fine = 2
 clip_grid = False
 """
-nmax_coarse = 8
-nmax_fine   = 16
-n_blocks_coarse_to_fine = 2
+nmax_coarse = 32
+nmax_fine   = 128
+n_blocks_coarse_to_fine = 8
 clip_grid = False
 
 
