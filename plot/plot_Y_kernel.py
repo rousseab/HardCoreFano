@@ -8,6 +8,7 @@ import numpy as N
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import os
 
 mpl.rcParams['font.size']='16'
 
@@ -52,7 +53,7 @@ def get_Y_smooth(list_xi1, list_xi2, list_eta_hw, SK):
     # Where the denominator is too close to zero, replace by value for argument close to zero.
 
 
-    tol = 1e-5
+    tol = 1e-6
 
     I,J = N.nonzero( N.abs(denominator) < tol)
     
@@ -85,13 +86,26 @@ beta = 1./(kB*T)
 
 mu    =-0.400  # -400 meV
 #delta = 0.500 # 500 meV
-delta = 0.050  # 50 meV
+kernel_Gamma_width = 0.200  # 200 meV
+
+# fill the object with dummy variables
+q_vector    = N.array([0.,0.])
+list_hw     = N.array([0.])
+delta_width = 0.
+
+filename ='scattering_spline_mu=%4.3f_eV_delta=%4.3f_eV.nc'%(mu,kernel_Gamma_width)
+
+os.system('cp %s %s'%(filename,'scattering_spline.nc'))
+
+wedge = DummyWedge(N.array([q_vector]))
+
+IG = IGridFunction( 'smooth', q_vector,list_hw, delta_width, kernel_Gamma_width, mu, beta, wedge)
 
 normalization = density/D_cutoff  
 
-filename ='scattering_spline_mu=%4.3f_eV_delta=%4.3f_eV.nc'%(mu,delta)
+filename ='scattering_spline_mu=%4.3f_eV_delta=%4.3f_eV.nc'%(mu,kernel_Gamma_width)
 
-SK = ScatteringKernel(mu,beta,delta)
+SK = ScatteringKernel(mu,beta,kernel_Gamma_width)
 #SK.build_scattering_kernel()
 #SK.build_and_write_spline_parameters(filename)
 SK.read_spline_parameters(filename)
@@ -115,6 +129,7 @@ lw  = 3
 xi2=  -1.0
 
 XI2 = [-1.,0.,1.]
+
 hw = 0.200
 
 for xi2 in XI2:
@@ -123,14 +138,19 @@ for xi2 in XI2:
     for eta,ax in zip([-1.,1.],list_ax):
 
         list_eta_hw = eta*N.array([hw])
-        Y_smooth =  get_Y_smooth(list_xi, list_xi2, list_eta_hw, SK)[:,0]
+        explicit_Y_smooth =  get_Y_smooth(list_xi, list_xi2, list_eta_hw, SK)[:,0]
+        Y_smooth =  IG.get_Y_smooth(list_xi, list_xi2, list_eta_hw)[:,0]
+
+        error = explicit_Y_smooth- Y_smooth 
 
 
-        ax.plot(list_xi,normalization*N.real(Y_smooth),'-',alpha=1.0,lw=lw,label='$\\xi_2 = %4.3f$ eV'%xi2)
+        line, = ax.plot(list_xi,normalization*N.real(Y_smooth),'-',alpha=1.0,lw=lw,label='$\\xi_2 = %4.3f$ eV'%xi2)
+
+        c=line.get_color()
 
         x = (xi2-eta*hw)*N.array([1,1])
         y = N.array(ax.get_ylim())
-        ax.plot(x,y,'--',alpha=0.5,lw=lw,label='$\\xi = \\xi_2 - \eta \hbar\omega$')
+        ax.plot(x,y,c+'--',alpha=0.5,lw=lw,label='$\\xi = \\xi_2 - \eta \hbar\omega$')
 
 
 ax1.set_title('$\eta =-1$')
@@ -145,11 +165,10 @@ for ax in list_ax:
     ax.legend(loc=0,fancybox=True,shadow=True)
 
 
-ax1.set_ylabel('$n/D Re[Y(\\xi,\hbar\omega)]$')
-ax2.set_ylabel('$n/D Im[Y(\\xi,\hbar\omega)]$')
+    ax.set_ylabel('$n/D Y(\\xi,\hbar\omega)$')
 
 # adjust the figure so that there is no wasted space
-fig1.suptitle('$\mu$ = %4.3f eV, $\hbar\omega$ = %4.3f eV, $\delta$ = %4.3f eV'%(mu,hw,delta))
+fig1.suptitle('$\mu$ = %4.3f eV, $\hbar\omega$ = %4.3f eV, $\Gamma_\gamma$ = %4.3f eV'%(mu,hw,kernel_Gamma_width))
 fig1.subplots_adjust(   left    =   0.07,
                         bottom  =   0.15,
                         right   =   0.95,

@@ -18,10 +18,10 @@ import matplotlib.cm as cm
 mpl.rcParams['font.size']='20'
 
 
-list_xi = N.arange(-0.8*D_cutoff,0.8*D_cutoff,0.005)
+list_xi = N.arange(-5.0*D_cutoff,5.0*D_cutoff,0.005)
 
-h = 8   # figure height
-w = 16  # figure width
+h = 12   # figure height
+w = 20  # figure width
 
 fig1 = plt.figure(figsize=(w,h))
 ax1 = fig1.add_subplot(121)
@@ -35,22 +35,31 @@ lw  = 3
 
 
 
-list_delta = [0.05,0.100,0.150,0.200]
+list_kernel_delta_wdith = [0.05,0.100,0.150,0.200]
 
-for delta in list_delta:
+for delta in list_kernel_delta_wdith:
+
 
     list_z = list_xi+1j*delta
 
+    """
     gamma  = get_gamma(list_z)
-
     Sigma_normalized = 0.5*gamma/D_cutoff*density
-
     re_Sigma = N.real(Sigma_normalized)
     im_Sigma = N.imag(Sigma_normalized)
+    """
+
+    normalization = 0.5/D_cutoff*density
+
+    re_Sigma = get_KR(list_xi,delta)*normalization
+    im_Sigma =-get_KI(list_xi,delta)*normalization
 
 
-    ax1.plot(list_xi/D_cutoff,-im_Sigma,'-',alpha=1.0,lw=lw,label='$\delta = %4.1f$ meV'%(1000*delta))
-    ax2.plot(list_xi/D_cutoff,re_Sigma,'-',alpha=1.0,lw=lw,label='$\delta = %4.1f$ meV'%(1000*delta))
+
+    line, = ax1.plot(list_xi/D_cutoff,-im_Sigma,'-',alpha=1.0,lw=lw,label='$\Gamma_\gamma= %4.1f$ meV'%(1000*delta))
+
+
+    ax2.plot(list_xi/D_cutoff,re_Sigma,'-',alpha=1.0,lw=lw,label='$\Gamma_\gamma= %4.1f$ meV'%(1000*delta))
 
 
 

@@ -13,32 +13,27 @@ mpl.rcParams['font.size']='8'
 
 
 
-
 kB = 8.6173324e-5 # eV/K
 T  = 300 # K
 beta = 1./(kB*T)
 
 mu    =-0.400  # -400 meV
-#delta = 0.500  # 500 meV
-delta = 0.050  # 50 meV
+kernel_Gamma_width = 0.200  # 200 meV
 
 normalization = density/D_cutoff  
 
-filename ='scattering_spline_mu=%4.3f_eV_delta=%4.3f_eV.nc'%(mu,delta)
+filename ='scattering_spline_mu=%4.3f_eV_delta=%4.3f_eV.nc'%(mu,kernel_Gamma_width)
 
-SK = ScatteringKernel(mu,beta,delta)
+SK = ScatteringKernel(mu,beta,kernel_Gamma_width)
 #SK.build_scattering_kernel()
 #SK.build_and_write_spline_parameters(filename)
 SK.read_spline_parameters(filename)
 
 list_xi = N.arange(-2.*D_cutoff,2*D_cutoff,0.005)
 
-g_plus = get_gamma(list_xi+mu+1j*delta)
-g_minus= get_gamma(list_xi+mu-1j*delta)
 
-KR = N.real ( ( g_plus+ g_minus)/2. )
-KI = N.real ( (-g_plus+ g_minus)/(2.*1j) )
-
+KR = get_KR(list_xi+mu,kernel_Gamma_width)
+KI = get_KI(list_xi+mu,kernel_Gamma_width)
 
 f  =  function_fermi_occupation(list_xi,0.,beta)
 KA =  -2.*N.pi*(hvF)**2/D_cutoff*((list_xi+mu)/D_cutoff)
@@ -116,8 +111,8 @@ L2_approx = N.array([SK.get_LI_oneD(list_xi2-hw),SK.get_LI_oneD(list_xi2+hw)]).t
 for i, xi2 in enumerate(list_xi2): 
 
 
-    den_plus  = (list_xi-xi2+hw)/((list_xi-xi2+hw)**2+delta**2)
-    den_minus = (list_xi-xi2-hw)/((list_xi-xi2-hw)**2+delta**2)
+    den_plus  = (list_xi-xi2+hw)/((list_xi-xi2+hw)**2+kernel_Gamma_width**2)
+    den_minus = (list_xi-xi2-hw)/((list_xi-xi2-hw)**2+kernel_Gamma_width**2)
 
     Y_approx = (L-L2_approx[i,0])*den_plus- (L-L2_approx[i,1])*den_minus
 
@@ -145,7 +140,7 @@ ax3.set_ylabel('$n \Delta L(\\xi)/D$')
 ax4.set_ylabel('$n Y(\\xi,\hbar\omega)/D$')
 
 # adjust the figure so that there is no wasted space
-fig1.suptitle('$\mu$ = %4.3f eV, $\delta$ = %4.3f eV'%(mu,delta))
+fig1.suptitle('$\mu$ = %4.3f eV, $\Gamma_\gamma$ = %4.3f eV'%(mu,kernel_Gamma_width))
 fig1.subplots_adjust(   left    =   0.07,
                         bottom  =   0.15,
                         right   =   0.95,

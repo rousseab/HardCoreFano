@@ -19,16 +19,16 @@ import matplotlib.cm as cm
 mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
 
+"""
 nmax_coarse = 8
 nmax_fine   = 256
 n_blocks_coarse_to_fine = 2
 clip_grid = True
 """
-nmax_coarse = 32
-nmax_fine   = 128
-n_blocks_coarse_to_fine = 8
+nmax_coarse = 4
+nmax_fine   = 8
+n_blocks_coarse_to_fine = 2
 clip_grid = False
-"""
 
 
 #include_Gamma = True
