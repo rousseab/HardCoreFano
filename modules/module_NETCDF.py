@@ -66,7 +66,9 @@ def read_splmake(filename):
 
     return splmake_tuple, file_mu, file_beta, file_delta
 
-def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
+def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
+                      nmax_coarse_singular, nmax_fine_singular, nblocks_singular, hw_ph,filename):
+
     """
     Writes the results of a computation to a netcdf file.
     Takes a Compute_Loop_Function_Product object as input; it is assumed that 
@@ -83,9 +85,12 @@ def write_to_file(CS,nmax_coarse, nmax_fine, nblocks ,hw_ph,filename):
     setattr(ncfile,'beta',CS.beta) 
     setattr(ncfile,'acell',acell) 
     setattr(ncfile,'Area',Area) 
-    setattr(ncfile,'nmax_coarse',nmax_coarse) 
-    setattr(ncfile,'nmax_fine',nmax_fine) 
-    setattr(ncfile,'n_blocks_coarse_to_fine',nblocks) 
+    setattr(ncfile,'nmax_coarse_smooth',nmax_coarse_smooth) 
+    setattr(ncfile,'nmax_fine_smooth',nmax_fine_smooth) 
+    setattr(ncfile,'n_blocks_coarse_to_fine_smooth',nblocks_smooth) 
+    setattr(ncfile,'nmax_coarse_singular',nmax_coarse_singular) 
+    setattr(ncfile,'nmax_fine_singular',nmax_fine_singular) 
+    setattr(ncfile,'n_blocks_coarse_to_fine_singular',nblocks_singular) 
     setattr(ncfile,'delta_width',CS.delta_width) 
     setattr(ncfile,'kernel_Gamma_width',CS.kernel_Gamma_width) 
     setattr(ncfile,'phonon_frequency',hw_ph) 
