@@ -85,16 +85,20 @@ from module_NETCDF         import *
 # useful commands
 #
 #================================================================================
-def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,delta_width, \
-                        kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
+def build_command(executable,type,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblocks_smooth,\
+                        nk_max_coarse_singular, nk_max_fine_singular, nblocks_singular,\
+                        n_hw,hw_max,delta_width, kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
     command = [executable,
                   '%s'%type,
                '%8.4f'%mu,
                '%8.2f'%T,
-                  '%i'%nk_max_coarse,
-                  '%i'%nk_max_fine,
-                  '%i'%nblocks,
+                  '%i'%nk_max_coarse_smooth,
+                  '%i'%nk_max_fine_smooth,
+                  '%i'%nblocks_smooth,
+                  '%i'%nk_max_coarse_singular,
+                  '%i'%nk_max_fine_singular,
+                  '%i'%nblocks_singular,
                   '%i'%n_hw,
                '%8.4f'%hw_max,
                '%8.4f'%delta_width,
@@ -119,15 +123,19 @@ def build_command(executable,type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,
     return command
 
 
-def build_string(type,mu,T,nk_max_coarse, nk_max_fine, nblocks,n_hw,hw_max,delta_width,\
-                kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
+def build_string(type,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblocks_smooth,\
+                    nk_max_coarse_singular, nk_max_fine_singular, nblocks_singular,\
+                    n_hw,hw_max,delta_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
     string =      '%s '%type+\
                '%8.4f '%mu+\
                '%8.2f '%T+\
-                  '%i '%nk_max_coarse+\
-                  '%i '%nk_max_fine+\
-                  '%i '%nblocks+\
+                  '%i '%nk_max_coarse_smooth+\
+                  '%i '%nk_max_fine_smooth+\
+                  '%i '%nblocks_smooth+\
+                  '%i '%nk_max_coarse_singular+\
+                  '%i '%nk_max_fine_singular+\
+                  '%i '%nblocks_singular+\
                   '%i '%n_hw+\
                '%8.4f '%hw_max+\
                '%8.4f '%delta_width+\
