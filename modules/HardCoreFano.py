@@ -32,7 +32,7 @@ from module_Driver import *
 input_error   = False
 
 args = sys.argv[1:]
-if len(args) != 29:
+if len(args) != 28:
         input_error = True
 
 try:
