@@ -17,7 +17,8 @@ from module_Integrators import *
 
 class Compute_Loop_Function_Product:
 
-    def __init__(self, type_of_integral, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid, external_list_hw, kernel_Gamma_width, delta_width):
+    def __init__(self, type_of_integral, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid_singular,grid_smooth, \
+                    external_list_hw, kernel_Gamma_width, delta_width):
 
         self.type_of_integral = type_of_integral
 
@@ -27,7 +28,9 @@ class Compute_Loop_Function_Product:
         self.q       = deepcopy(q_vector)
         self.E_ph    = deepcopy(E_phonon_polarization)
         self.hw_ph   = deepcopy(hw_ph)
-        self.grid    = deepcopy(grid)
+
+        self.grid_singular    = deepcopy(grid_singular)
+        self.grid_smooth      = deepcopy(grid_smooth)
 
         self.list_hw = external_list_hw 
         self.nhw     = len(external_list_hw)
@@ -65,8 +68,25 @@ class Compute_Loop_Function_Product:
 
     def Compute_Hq_Product(self):
 
+
+        # compute the smooth grid contribution
+        self.Compute_Hq_Product_per_grid(self,self.grid_smooth)
+
+        # compute the singular grid contribution
+        self.Compute_Hq_Product_per_grid(self,self.grid_singular)
+
+        # Compute the averaged product of H(q,w) H(-q,w)
+        self.HqHq = 0.25* ( self.Hq_plus[0,0, :]*self.Hq_minus[0,0, :] +
+                            self.Hq_plus[1,0, :]*self.Hq_minus[1,0, :] +
+                            self.Hq_plus[0,1, :]*self.Hq_minus[0,1, :] +
+                            self.Hq_plus[1,1, :]*self.Hq_minus[1,1, :] )
+
+
+
+    def Compute_Hq_Product_per_grid(self,grid):
+
         # Loop on wedges in the 1BZ
-        for wedge in self.grid.list_wedges:
+        for wedge in grid.list_wedges:
 
             # Compute matrix elements
             Mq = MGridFunction(q_vector=self.q,E_phonon_polarization=self.E_ph,hw_nu_q=self.hw_ph,wedge=wedge)
@@ -105,12 +125,6 @@ class Compute_Loop_Function_Product:
                                 self.Hq_plus[i_alpha,i_L, :]  += self.normalization*AreaIntegrator(wedge,MI)
                                 self.Hq_minus[i_alpha,i_L, :] += -self.normalization*AreaIntegrator(wedge,M_starI)
 
-
-        # Compute the averaged product of H(q,w) H(-q,w)
-        self.HqHq = 0.25* ( self.Hq_plus[0,0, :]*self.Hq_minus[0,0, :] +
-                            self.Hq_plus[1,0, :]*self.Hq_minus[1,0, :] +
-                            self.Hq_plus[0,1, :]*self.Hq_minus[0,1, :] +
-                            self.Hq_plus[1,1, :]*self.Hq_minus[1,1, :] )
 
 
         return
