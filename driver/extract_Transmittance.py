@@ -1,6 +1,7 @@
 import sys
 
-module_directory = '/RQusagers/roussea4/python_depository/HCF_5.0/modules/'
+module_directory = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_5.0/modules/'
+
 
 sys.path.append(module_directory)
 
@@ -28,8 +29,8 @@ def build_wedge_to_list(Q_wedge,list_reduced_q):
 
     # Create a large array containing the differences between list_k and list_reduced_q
 
-    x = wedge.list_k[:,0,N.newaxis]-list_reduced_q[N.newaxis,:,0]
-    y = wedge.list_k[:,1,N.newaxis]-list_reduced_q[N.newaxis,:,1]
+    x = Q_wedge.list_k[:,0,N.newaxis]-list_reduced_q[N.newaxis,:,0]
+    y = Q_wedge.list_k[:,1,N.newaxis]-list_reduced_q[N.newaxis,:,1]
 
     # the z array contains the distances between k and q vectors
     z = N.sqrt(x**2+y**2)
@@ -60,7 +61,7 @@ def phonon_propagator(list_hw,list_hw_ph,width):
 
     return D
 
-netcdf_filename = 'HCF_nq=32_128_5_nk=8_256_2_mu=-400_meV_Gamma=50_meV.nc'
+netcdf_filename = 'HCF_nq=8_32_3_nk=8_32_3_mu=-400_meV_Gamma=50_meV_delta=50_meV.nc'
 
 output_filename = netcdf_filename.replace('nc','dat').replace('HCF','Transmittance')
 #================================================================================
@@ -108,7 +109,7 @@ include_Gamma = True
 Q_grid = TesselationDoubleGrid(q_nmax_coarse, q_nmax_fine, q_nmax_block, include_Gamma )
 
 Q_wedge = Q_grid.list_wedges[0]
-nk    = len(wedge.list_k)
+nk    = len(Q_wedge.list_k)
 
 wedge_to_list = build_wedge_to_list(Q_wedge,list_q)
 

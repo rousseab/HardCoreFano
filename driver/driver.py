@@ -128,12 +128,12 @@ for nu_index in list_nu_index:
                                         nk_blocks_coarse_to_fine,iq_index,nu_index)
         
         command  = build_command(HCK,type_of_integral,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,\
-                                    delta_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,filename_plus)
+                                    delta_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,filename)
 
         # take out finished jobs
         while len(set_of_processes) >= max_processes:
 
-            time.sleep(2)
+            time.sleep(0.2)
             set_of_finished_processes = set()
             for job in set_of_processes:
                 if job.poll() is not None:
