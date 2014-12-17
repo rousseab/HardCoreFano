@@ -85,12 +85,11 @@ from module_NETCDF         import *
 # useful commands
 #
 #================================================================================
-def build_command(executable,type,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblocks_smooth,\
+def build_command(executable,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblocks_smooth,\
                         nk_max_coarse_singular, nk_max_fine_singular, nblocks_singular,\
                         n_hw,hw_max,delta_width, kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
     command = [executable,
-                  '%s'%type,
                '%8.4f'%mu,
                '%8.2f'%T,
                   '%i'%nk_max_coarse_smooth,
@@ -123,12 +122,11 @@ def build_command(executable,type,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth,
     return command
 
 
-def build_string(type,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblocks_smooth,\
+def build_string(mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblocks_smooth,\
                     nk_max_coarse_singular, nk_max_fine_singular, nblocks_singular,\
                     n_hw,hw_max,delta_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
-    string =      '%s '%type+\
-               '%8.4f '%mu+\
+    string =   '%8.4f '%mu+\
                '%8.2f '%T+\
                   '%i '%nk_max_coarse_smooth+\
                   '%i '%nk_max_fine_smooth+\
