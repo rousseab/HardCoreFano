@@ -47,8 +47,6 @@ try:
         nmax_fine_singular   = N.int(args[6])
         nblock_singular      = N.int(args[7])
 
-
-
         n_hw                = N.int(args[8])
         hw_max              = N.float(args[9])
         delta_width         = N.float(args[10])
@@ -73,7 +71,6 @@ try:
         re_E2z = N.float(args[25])
         im_E2z = N.float(args[26])
         filename = args[27]
-
 except:
         input_error   = True
 
@@ -137,4 +134,5 @@ OkComputer = Compute_Loop_Function_Product(type, mu, beta, q_ph, E_ph, hw_ph, gr
 
 OkComputer.Compute_Hq_Product()
 
-write_to_file(OkComputer, nmax_coarse, nmax_fine, nblock, hw_ph, filename)
+write_to_file(OkComputer, nmax_coarse_smooth, nmax_fine_smooth, nblock_smooth, nmax_coarse_singular, nmax_fine_singular, nblock_singular, hw_ph, filename)
+
