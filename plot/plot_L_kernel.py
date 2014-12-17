@@ -38,8 +38,8 @@ KI = get_KI(list_xi+mu,kernel_Gamma_width)
 f  =  function_fermi_occupation(list_xi,0.,beta)
 KA =  -2.*N.pi*(hvF)**2/D_cutoff*((list_xi+mu)/D_cutoff)
 
-h = 14  # figure height
-w = 22  # figure width
+h = 8  # figure height
+w = 16  # figure width
 
 fig1 = plt.figure(figsize=(w,h))
 ax1 = fig1.add_subplot(221)

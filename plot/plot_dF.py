@@ -56,8 +56,8 @@ for i,wedge in enumerate(grid.list_wedges):
 
     S  = dF.df
 
-        x = wedge.list_k[:,0]/twopia
-        y = wedge.list_k[:,1]/twopia
+    x = wedge.list_k[:,0]/twopia
+    y = wedge.list_k[:,1]/twopia
 
     t = wedge.triangles_indices
 
