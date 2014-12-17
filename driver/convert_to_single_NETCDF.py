@@ -11,17 +11,25 @@ jobs_bundle = []
 dic_job = {}
 mu     =-0.400
 delta_width         = 0.050
-kernel_Gamma_width  = 0.050
+kernel_Gamma_width  = 0.200
 nq = (8,32,3)
-nk = (8,32,3)
+nk_smooth   = (8,16,2)
+nk_singular = (8,32,3)
 dic_job['nq']                  =  nq
-dic_job['nk']                  =  nk
+dic_job['nk_smooth']           =  nk_smooth
+dic_job['nk_singular']         =  nk_singular
 dic_job['mu']                  =  mu
 dic_job['kernel_Gamma_width']  =  kernel_Gamma_width
 dic_job['delta_width']         =  delta_width
-dic_job['data_dir']            = 'nq=%i_%i_%i_nk=%i_%i_%i_mu=%4.3f_meV/'%(nq[0],nq[1],nq[2],nk[0],nk[1],nk[2],mu)
-dic_job['filename_tmpl']       = 'HCF_nq=%i_%i_%i_nk=%i_%i_%i'%(nq[0],nq[1],nq[2],nk[0],nk[1],nk[2])+'_iq=%i_nu=%i.nc'
-dic_job['combined_filename']   = 'HCF_nq=%i_%i_%i_nk=%i_%i_%i_mu=%i_meV_Gamma=%i_meV_delta=%i_meV'%(nq[0],nq[1],nq[2],nk[0],nk[1],nk[2],1000*mu,1000*kernel_Gamma_width,1000*delta_width)+'.nc'
+dic_job['data_dir']            = 'nq=%i_%i_%i'%(nq[0],nq[1],nq[2])+\
+                                 '_nk_smooth=%i_%i_%i'%(nk_smooth[0],nk_smooth[1],nk_smooth[2])+\
+                                 '_nk_singular=%i_%i_%i'%(nk_singular[0],nk_singular[1],nk_singular[2])+\
+                                 '_mu=%4.3f_eV_Gamma=%4.3f_eV/'%(mu, kernel_Gamma_width)
+dic_job['filename_tmpl']       = 'HCF_iq=%i_nu=%i.nc'
+dic_job['combined_filename']   = 'HCF_nq=%i_%i_%i'%(nq[0],nq[1],nq[2])+\
+                                 '_nk_smooth=%i_%i_%i'%(nk_smooth[0],nk_smooth[1],nk_smooth[2])+\
+                                 '_nk_singular=%i_%i_%i'%(nk_singular[0],nk_singular[1],nk_singular[2])+\
+                                 '_mu=%i_meV_Gamma=%i_meV_delta=%i_meV'%(1000*mu,1000*kernel_Gamma_width,1000*delta_width)+'.nc'
 jobs_bundle.append(dic_job)
 
 
@@ -48,7 +56,7 @@ for dic_job in jobs_bundle:
     list_iq = []
     for filename in os.listdir(data_dir):
         if 'iq=' in filename:
-            iq = int(filename.strip().split('=')[3][:-3])
+            iq = int(filename.strip().split('=')[1][:-3])
             list_iq.append(iq)
 
     number_of_q = N.array(list_iq).max()
@@ -74,9 +82,16 @@ for dic_job in jobs_bundle:
     Gamma = ncfile.kernel_Gamma_width
     delta = ncfile.delta_width
     beta  = ncfile.beta
-    knmax_coarse = ncfile.nmax_coarse
-    knmax_fine   = ncfile.nmax_fine
-    knmax_block  = ncfile.n_blocks_coarse_to_fine
+
+    knmax_coarse_smooth = ncfile.nmax_coarse_smooth
+    knmax_fine_smooth   = ncfile.nmax_fine_smooth
+    knmax_block_smooth  = ncfile.n_blocks_coarse_to_fine_smooth
+
+    knmax_coarse_singular = ncfile.nmax_coarse_singular
+    knmax_fine_singular   = ncfile.nmax_fine_singular
+    knmax_block_singular  = ncfile.n_blocks_coarse_to_fine_singular
+
+
 
 
     ncfile.close()
@@ -99,9 +114,15 @@ for dic_job in jobs_bundle:
     setattr(Cncfile,'delta_width',delta) 
 
 
-    setattr(Cncfile,'k_nmax_coarse',knmax_coarse)
-    setattr(Cncfile,'k_nmax_fine',knmax_fine)
-    setattr(Cncfile,'k_nmax_block',knmax_block)
+    setattr(Cncfile,'k_nmax_coarse_smooth',knmax_coarse_smooth)
+    setattr(Cncfile,'k_nmax_fine_smooth',knmax_fine_smooth)
+    setattr(Cncfile,'k_nmax_block_smooth',knmax_block_smooth)
+
+    setattr(Cncfile,'k_nmax_coarse_singular',knmax_coarse_singular)
+    setattr(Cncfile,'k_nmax_fine_singular',knmax_fine_singular)
+    setattr(Cncfile,'k_nmax_block_singular',knmax_block_singular)
+
+
 
     setattr(Cncfile,'q_nmax_coarse',nq[0])
     setattr(Cncfile,'q_nmax_fine',nq[1])

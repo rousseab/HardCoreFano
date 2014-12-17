@@ -25,7 +25,7 @@ HCK = path+'HardCoreFano.py'
 # Global parameters
 #----------------------------------------
 
-max_processes = 4
+max_processes = 8
 
 mu   =-0.400 # eV
 T    = 300.  # Kelvin
@@ -35,21 +35,25 @@ beta = 1./(kB*T)
 
 list_nu_index = [2,3,4,5]
 
-nkmax_coarse =  8
-nkmax_fine   = 32
-nk_blocks_coarse_to_fine = 3
+nkmax_coarse_singular =  8
+nkmax_fine_singular   = 32
+nk_blocks_coarse_to_fine_singular = 3
+
+nkmax_coarse_smooth =  8
+nkmax_fine_smooth = 16
+nk_blocks_coarse_to_fine_smooth = 2
+
 
 nqmax_coarse =  8
 nqmax_fine   = 32
 nq_blocks_coarse_to_fine = 3
 
-kernel_Gamma_width  = 0.050 # meV
+kernel_Gamma_width  = 0.200 # meV
 delta_width         = 0.050 # meV
 
-n_hw   = 251
+n_hw   = 151
 hw_max = 0.250
 
-type_of_integral = 'smooth'
 
 #================================================================================
 # Phonon q point grid
@@ -76,14 +80,17 @@ tol    = 1e-10
 
 for k in Q_wedge.list_k:
 
-    new = True
+    if len(list_q) == 0:
+        new = True
+    else:
+        list_dq = N.array(list_q)-k
 
-    list_dq = N.array(list_q)-k
+        distances = N.sqrt(N.sum(list_dq**2 ,axis=1))
 
-    distances = N.sqrt(N.sum(list_dq**2 ,axis=1))
-
-    if distances.min() < tol:
-        new = False
+        if distances.min() < tol:
+            new = False
+        else:
+            new = True
 
     if new:
         list_q.append(k)
@@ -96,22 +103,25 @@ number_of_q_vectors = len(list_q )
 # Generate data!
 #================================================================================
 
-filename_template  = 'HCF_nq=%i_%i_%i_nk=%i_%i_%i_iq=%i_nu=%i.nc'
+filename_template  = 'HCF_iq=%i_nu=%i.nc'
 
 log = open('calculation.log','w')
 
 
 set_of_processes = set()
 
-work_dir = 'nq=%i_%i_%i_nk=%i_%i_%i_mu=%4.3f/'%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,nk_blocks_coarse_to_fine,mu)
-os.mkdir(work_dir )
+work_dir = 'nq=%i_%i_%i_nk_smooth=%i_%i_%i_nk_singular=%i_%i_%i_mu=%4.3f_eV_Gamma=%4.3f_eV/'%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse_smooth, nkmax_fine_smooth,nk_blocks_coarse_to_fine_smooth, nkmax_coarse_singular, nkmax_fine_singular,nk_blocks_coarse_to_fine_singular, mu, kernel_Gamma_width)
+#os.mkdir(work_dir )
 os.chdir(work_dir )
 
+
 # make the scattering kernel
+"""
 SK = ScatteringKernel(mu,beta,kernel_Gamma_width)
 kernel_filename ='scattering_spline.nc'
 SK.build_scattering_kernel()
 SK.build_and_write_spline_parameters(kernel_filename)
+"""
 
 
 for nu_index in list_nu_index:
@@ -124,11 +134,12 @@ for nu_index in list_nu_index:
         hw_ph = list_hw_ph[nu_index]
         E_ph  = list_Eph[:,nu_index]
 
-        filename = filename_template%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse, nkmax_fine,\
-                                        nk_blocks_coarse_to_fine,iq_index,nu_index)
+        filename = filename_template%(iq_index,nu_index)
         
-        command  = build_command(HCK,type_of_integral,mu,T,nkmax_coarse,nkmax_fine, nk_blocks_coarse_to_fine, n_hw,hw_max,\
-                                    delta_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,filename)
+        command  = build_command(HCK,mu,T,\
+                                    nkmax_coarse_smooth, nkmax_fine_smooth, nk_blocks_coarse_to_fine_smooth, \
+                                    nkmax_coarse_singular, nkmax_fine_singular, nk_blocks_coarse_to_fine_singular, \
+                                    n_hw,hw_max, delta_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,filename)
 
         # take out finished jobs
         while len(set_of_processes) >= max_processes:
