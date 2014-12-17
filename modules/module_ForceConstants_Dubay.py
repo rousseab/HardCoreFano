@@ -21,7 +21,8 @@ def getDubayForceConstants():
         datafile = open('/Users/Shared/Bruno/work/projects/Graphene_Fano/python_work/HardCoreKernelFano/modules/force_constants.txt')
 
     else:
-        datafile = open('/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_2.0/modules/force_constants.txt')
+        datafile = open('/RQusagers/roussea4/python_depository/HCF_5.0/modules/force_constants.txt')
+
 
     DubayForceConstants_cartesian = {}
     DubayForceConstants_radial    = {}
