@@ -70,10 +70,10 @@ class Compute_Loop_Function_Product:
 
 
         # compute the smooth grid contribution
-        self.Compute_Hq_Product_per_grid(self,self.grid_smooth)
+        self.Compute_Hq_Product_per_grid(self.grid_smooth)
 
         # compute the singular grid contribution
-        self.Compute_Hq_Product_per_grid(self,self.grid_singular)
+        self.Compute_Hq_Product_per_grid(self.grid_singular)
 
         # Compute the averaged product of H(q,w) H(-q,w)
         self.HqHq = 0.25* ( self.Hq_plus[0,0, :]*self.Hq_minus[0,0, :] +
