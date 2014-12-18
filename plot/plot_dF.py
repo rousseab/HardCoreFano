@@ -20,12 +20,16 @@ T = 300. # K
 beta = 1./(kB*T)
 mu   = -0.400 # eV
 
-nmax_coarse = 24
-nmax_fine   = 120
-n_blocks_coarse_to_fine = 5
-
+nmax_coarse = 8
+nmax_fine   = 256
+n_blocks_coarse_to_fine = 2
+clip_grid = True
+clip_energy = N.abs(mu)+0.5
 include_Gamma = False
-grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma )
+grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma , \
+                                clip_grid=clip_grid,clip_energy=clip_energy)
+
+
 
 hw = 0.150 # eV
 k_mu     = N.abs(mu)/hvF
@@ -33,7 +37,7 @@ k_w      = N.abs(hw)/hvF
 
 K = twopia*2./3*N.array([1.,0.])
 
-q_vector = k_mu*N.array([0.5,0.00])
+q_vector = K+k_mu*N.array([0.05,0.00])
 
 
 fig = plt.figure(figsize=(12,10))
@@ -74,7 +78,6 @@ vmax = N.max(list_max)
 norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
 for image in list_images:
         image.set_norm(norm)
-
 
 
 fig.colorbar(image,ax=ax)
