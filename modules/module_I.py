@@ -149,11 +149,12 @@ class IGridFunction:
         return Y_smooth
 
     def build_I(self,wedge):
-
         if self.smooth:
             self.build_I_smooth(wedge)
+            #self.build_I_smooth_intraband_only(wedge)
         elif self.singular:
             self.build_I_singular(wedge)
+            #self.build_I_singular_intraband_only(wedge)
 
     def build_I_smooth(self,wedge):
         """
@@ -222,7 +223,138 @@ class IGridFunction:
 
         return 
 
+    def build_I_smooth_intraband_only(self,wedge):
+        """
+        All quantities are built here. It will be *crucial* to make
+        this code as transparent as possible, to avoid making mistakes!
+
+        Only intraband contributions are considered, assuming mu < 0.
+        """
+
+        list_k    = wedge.list_k
+        list_kq   = list_k + self.q_vector
+
+        eps_k     = function_epsilon_k(list_k)
+
+        list_epsilon_k = [-eps_k, eps_k]
+
+        eps_kq    = function_epsilon_k(list_kq)
+        list_epsilon_kq = [-eps_kq, eps_kq]
+
+
+        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
+
+            list_xi2 = N.real(  list_epsilon2 - self.mu )
+
+            for eta in [-1.,1.]:
+
+                list_eta_hw =  eta*self.list_hw
+
+                list_Y12 = []
+                list_Y32 = []
+
+                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+
+                    list_xi1 = N.real(  list_epsilon1 - self.mu )
+
+                    Y12 = self.get_Y_smooth(list_xi1, list_xi2, list_eta_hw)
+                    list_Y12.append(Y12)
+
+                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+
+                    list_xi3 = N.real(  list_epsilon3 - self.mu )
+
+                    Y32 = self.get_Y_smooth(list_xi3, list_xi2, list_eta_hw)
+                    list_Y32.append(Y32)
+
+
+                for n1, list_epsilon1, Y12 in zip([0,1],list_epsilon_k, list_Y12):
+
+                    list_xi1 = N.real(  list_epsilon1 - self.mu )
+
+
+                    for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
+
+                        list_xi3 = N.real(  list_epsilon3 - self.mu )
+
+
+                        key   = (n1,n2,n3)
+                        index = self.index_dictionary[key]
+
+                        # cutoff the 1/0 
+                        den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
+
+                        smooth_contribution = eta*den13[:,N.newaxis]*(Y12-Y32) 
+
+                        if n1 == 0 and n2 == 0 and n3 == 0:
+                            smooth_contribution_intraband = smooth_contribution 
+                        else:
+                            smooth_contribution_intraband = complex(0.,0.)*N.zeros_like(smooth_contribution)
+
+                        # add the "smooth" part to the I function
+                        self.I[index,:,:] += self.conversion_factor*smooth_contribution_intraband
+
+        return 
+
     def build_I_singular(self,wedge):
+        """
+        All quantities are built here. It will be *crucial* to make
+        this code as transparent as possible, to avoid making mistakes!
+        """
+
+        list_k    = wedge.list_k
+        list_kq   = list_k + self.q_vector
+
+        eps_k     = function_epsilon_k(list_k)
+
+        list_epsilon_k = [-eps_k, eps_k]
+
+        eps_kq    = function_epsilon_k(list_kq)
+        list_epsilon_kq = [-eps_kq, eps_kq]
+
+
+        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
+
+            list_xi2 = N.real(  list_epsilon2 - self.mu )
+
+            for eta in [-1.,1.]:
+
+                list_eta_hw =  eta*self.list_hw
+
+                KR = get_KR(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.kernel_Gamma_width)
+                KI = get_KI(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.kernel_Gamma_width)
+                
+
+                Fermi2 = function_fermi_occupation(list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:],0.,self.beta)
+                Fermi1 = function_fermi_occupation(list_xi2[:,N.newaxis],0.,self.beta)
+                dFermi = Fermi2-Fermi1  
+
+                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+
+                    list_xi1 = N.real(  list_epsilon1 - self.mu )
+
+                    den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
+
+
+                    for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+
+                        list_xi3 = N.real(  list_epsilon3 - self.mu )
+
+                        den32  = self.cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
+
+                        key   = (n1,n2,n3)
+                        index = self.index_dictionary[key]
+
+                        #singular_contribution = -eta*dFermi*den12*den32*KR
+                        # The previous expression *seems* to have an error, forgetting the contribution from KI. 
+                        singular_contribution = -eta*dFermi*den12*den32*(KR+1j*eta*KI)
+
+                        # add the "smooth" part to the I function
+                        self.I[index,:,:] += self.conversion_factor*singular_contribution
+
+        return 
+
+    def build_I_singular_intraband_only(self,wedge):
         """
         All quantities are built here. It will be *crucial* to make
         this code as transparent as possible, to avoid making mistakes!
@@ -271,8 +403,14 @@ class IGridFunction:
 
                         singular_contribution = -eta*dFermi*den12*den32*KR
 
+                        if n1 == 0 and n2 == 0 and n3 == 0:
+                            singular_contribution_intraband = singular_contribution 
+                        else:
+                            singular_contribution_intraband = complex(0.,0.)*N.zeros_like(singular_contribution)
+
+
                         # add the "smooth" part to the I function
-                        self.I[index,:,:] += self.conversion_factor*singular_contribution
+                        self.I[index,:,:] += self.conversion_factor*singular_contribution_intraband 
 
         return 
 
