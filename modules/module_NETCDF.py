@@ -122,3 +122,55 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
 
     ncfile.close()
 
+
+
+def write_to_file_weak_coupling(CS, nmax_coarse, nmax_fine, nblocks, hw_ph,filename):
+    """
+    Writes the results of a computation to a netcdf file.
+    Takes a Compute_Loop_Function_Product object as input; it is assumed that 
+    this object has already computed what we wish to write!
+    """
+
+    #--------------------------------------------
+    # Write to netcdf file 
+    #--------------------------------------------
+    ncfile   = Dataset(filename,'w')
+
+    # --- set various attributes, identifying the parameters of the computation ----
+    setattr(ncfile,'mu',CS.mu) 
+    setattr(ncfile,'beta',CS.beta) 
+    setattr(ncfile,'acell',acell) 
+    setattr(ncfile,'Area',Area) 
+    setattr(ncfile,'nmax_coarse',nmax_coarse) 
+    setattr(ncfile,'nmax_fine',nmax_fine) 
+    setattr(ncfile,'n_blocks_coarse_to_fine',nblocks) 
+    setattr(ncfile,'delta_width',CS.delta_width) 
+    setattr(ncfile,'phonon_frequency',hw_ph) 
+
+    # --- Create dimensions ----
+    ncfile.createDimension("number_of_frequencies",CS.list_hw.shape[0])
+    ncfile.createDimension("xy",2)
+    ncfile.createDimension("phonon_alpha_kappa",6)
+
+
+    # --- Write data ----
+    Q      = ncfile.createVariable("q_phonon",'d',('xy',))
+    REPH   = ncfile.createVariable("Re_E_phonon",'d',('phonon_alpha_kappa',))
+    IEPH   = ncfile.createVariable("Im_E_phonon",'d',('phonon_alpha_kappa',))
+    HW     = ncfile.createVariable("list_hw",'d',('number_of_frequencies',))
+
+    RHH    = ncfile.createVariable("Re_HH",'d',('number_of_frequencies',))
+    IHH    = ncfile.createVariable("Im_HH",'d',('number_of_frequencies',))
+
+
+    Q[:]    = CS.q
+    REPH[:] = N.real(CS.E_ph)
+    IEPH[:] = N.imag(CS.E_ph)
+    HW[:]   = N.real(CS.list_hw)
+
+    RHH[:] = N.real(CS.HqHq)
+    IHH[:] = N.imag(CS.HqHq)
+
+
+    ncfile.close()
+
