@@ -124,7 +124,7 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
 
 
 
-def write_to_file_weak_coupling(CS, nmax_coarse, nmax_fine, nblocks, hw_ph,filename):
+def write_to_file_weak_scattering(CS, nmax_coarse, nmax_fine, nblocks, hw_ph,filename):
     """
     Writes the results of a computation to a netcdf file.
     Takes a Compute_Loop_Function_Product object as input; it is assumed that 
