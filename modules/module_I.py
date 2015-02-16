@@ -415,6 +415,128 @@ class IGridFunction:
         return 
 
 
+class IGridFunction_weak_scattering:
+    """
+    Class which builds and contains the I_{{n}}(k,k+q,w) object, which
+    is the result of summing on all the G functions in the loop function.
+
+    All the band energies will be assumed to be in eV, and the gamma 
+    function is replaced by I0, the weak scattering limit,  in units of in eV x a0^2. 
+    The units of I are
+    
+        [ I ] ~ Length^2/ Energy
+
+    As computed, we'll have [ I ] ~ a0^2/eV. To convert to a0^2/Ha (atomic units),
+    we must multipy by conversion factor = Ha_to_eV
+    """
+
+    def __init__(self, q_vector,list_hw, delta_width, mu, beta, wedge):
+        self.conversion_factor = Ha_to_eV
+
+        self.q_vector    = q_vector
+        self.delta_width = delta_width
+        self.list_hw     = list_hw
+
+        self.mu  = mu
+        self.beta= beta
+        self.I0  = 1. # eV/a0^2, we can modify this value with post-processing
+
+
+        self.nk   = len(wedge.list_k)
+        self.nw   = len(self.list_hw)
+        self.dim  = len(self.index_dictionary)
+
+        # I will be in units of [Length]^2 / [Enegy].
+        # where all terms are in fundamental units
+
+        self.I    = complex(0.,0.)*N.zeros([self.dim,self.nk,self.nw])
+
+        self.epsilon_k = complex(0.,0.)*N.zeros([2,self.nk])
+        self.epsilon_kq= complex(0.,0.)*N.zeros([2,self.nk])
+
+        self.build_I(wedge)
+
+    def build_indices(self):
+
+        self.index_dictionary = {}
+                
+        index = -1
+        for n1 in [0,1]:
+            for n2 in [0,1]:
+                for n3 in [0,1]:
+                    index += 1 
+                    key = (n1,n2,n3)
+                    self.index_dictionary[key] = index
+
+    def cutoff_denominator(self,list_x,fadeeva_width):
+        """
+        This function returns an approximation to 1/(x+i delta) using the Faddeeva function
+        """
+        z   = list_x/fadeeva_width
+
+        den = -1j*SS.wofz(z)/fadeeva_width*N.sqrt(N.pi)
+
+        return den
+
+    def build_I(self,wedge):
+        """
+        All quantities are built here. It will be *crucial* to make
+        this code as transparent as possible, to avoid making mistakes!
+        """
+
+        list_k    = wedge.list_k
+        list_kq   = list_k + self.q_vector
+
+        eps_k     = function_epsilon_k(list_k)
+
+        list_epsilon_k = [-eps_k, eps_k]
+
+        eps_kq    = function_epsilon_k(list_kq)
+        list_epsilon_kq = [-eps_kq, eps_kq]
+
+
+        for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+
+            list_xi1    = N.real(  list_epsilon1 - self.mu )
+            list_Fermi1 = function_fermi_occupation(list_xi1, 0.,self.beta)
+
+            for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+
+                list_xi3    = N.real(  list_epsilon3 - self.mu )
+                list_Fermi3 = function_fermi_occupation(list_xi1, 0.,self.beta)
+                
+                # cutoff the 1/0 
+                den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
+
+
+                for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
+
+                    list_xi2    = N.real(  list_epsilon2 - self.mu )
+                    list_Fermi2 = function_fermi_occupation(list_xi2, 0.,self.beta)
+
+                    df32_denom = (list_Fermi3-list_Fermi2)*den13 
+                    df12_denom = (list_Fermi1-list_Fermi2)*den13 
+
+                    for eta in [-1.,1.]:
+
+                        list_eta_hw =  eta*self.list_hw
+
+                        den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
+                        den32  = self.cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
+
+
+                        contribution = eta*self.I0*(df12_denom[:,N.newaxis]*den12 - df32_denom[:,N.newaxis]*den32)
+
+                        key   = (n1,n2,n3)
+                        index = self.index_dictionary[key]
+
+                        # add  to the I function
+                        self.I[index,:,:] += self.conversion_factor*contribution
+
+        return 
+
+
+
 def test_new_axis_slicing():
     """
     We do some pretty funky array slicing in the code generating I, and in particular
