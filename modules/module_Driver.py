@@ -123,7 +123,7 @@ def build_command(executable,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblo
 
 
 
-def build_command_weak_coupling(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,\
+def build_command_weak_scattering(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,\
                         n_hw,hw_max,delta_width,hw_ph,q_ph,E_ph,output_filename):
 
     command = [executable,
@@ -192,7 +192,7 @@ def build_string(mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblocks_smooth,\
 
 
 
-def build_string_weak_coupling(mu,T,nk_max_coarse, nk_max_fine, nblocks,\
+def build_string_weak_scattering(mu,T,nk_max_coarse, nk_max_fine, nblocks,\
                     n_hw,hw_max,delta_width,hw_ph,q_ph,E_ph,output_filename):
 
     string =   '%8.4f '%mu+\
