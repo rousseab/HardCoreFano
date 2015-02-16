@@ -72,6 +72,12 @@ import module_Compute_Loop_Function_Product
 reload(module_Compute_Loop_Function_Product)
 from module_Compute_Loop_Function_Product import *
 
+import module_Compute_Loop_Function_Product_weak_scattering
+reload(module_Compute_Loop_Function_Product_weak_scattering)
+from module_Compute_Loop_Function_Product_weak_scattering import *
+
+
+
 import module_Kramers_Kronig
 reload(module_Kramers_Kronig)
 from module_Kramers_Kronig import *
@@ -124,7 +130,7 @@ def build_command(executable,mu,T,nk_max_coarse_smooth, nk_max_fine_smooth, nblo
 
 
 def build_command_weak_scattering(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,\
-                        n_hw,hw_max,delta_width,hw_ph,q_ph,E_ph,output_filename):
+                                n_hw,hw_max,delta_width,hw_ph,q_ph,E_ph,output_filename):
 
     command = [executable,
                '%8.4f'%mu,

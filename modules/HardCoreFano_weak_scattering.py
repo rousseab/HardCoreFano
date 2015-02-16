@@ -117,7 +117,7 @@ list_hw      = hw_min+d_hw*iloop
 #       Compute the Hq function 
 #================================================================================
 
-OkComputer = Compute_Loop_Function_Product(mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, delta_width)
+OkComputer = Compute_Loop_Function_Product_weak_scattering(mu, beta, q_ph, E_ph, hw_ph, grid, list_hw, delta_width)
 
 OkComputer.Compute_Hq_Product()
 

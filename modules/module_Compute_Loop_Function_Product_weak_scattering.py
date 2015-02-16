@@ -116,7 +116,7 @@ class Compute_Loop_Function_Product_weak_scattering:
                                 MI      = MatrixElements_u[:,N.newaxis]*IElements 
                                 M_starI = MatrixElements_u_star[:,N.newaxis]*IElements 
 
-                                self.Hq_plus[i_alpha,i_L, :]  += self.normalization*AreaIntegrator(wedge,MI)
+                                self.Hq_plus[i_alpha,i_L, :]  +=  self.normalization*AreaIntegrator(wedge,MI)
                                 self.Hq_minus[i_alpha,i_L, :] += -self.normalization*AreaIntegrator(wedge,M_starI)
 
         return
