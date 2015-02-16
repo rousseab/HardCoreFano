@@ -442,6 +442,9 @@ class IGridFunction_weak_scattering:
         self.I0  = 1. # eV/a0^2, we can modify this value with post-processing
 
 
+        self.build_indices()
+
+
         self.nk   = len(wedge.list_k)
         self.nw   = len(self.list_hw)
         self.dim  = len(self.index_dictionary)
