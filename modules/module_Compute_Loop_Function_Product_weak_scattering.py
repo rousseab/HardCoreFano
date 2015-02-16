@@ -21,10 +21,8 @@ from module_Integrators import *
 
 class Compute_Loop_Function_Product_weak_scattering:
 
-    def __init__(self, type_of_integral, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid, \
+    def __init__(self,  mu, beta, q_vector, E_phonon_polarization, hw_ph, grid, \
                     external_list_hw,  delta_width):
-
-        self.type_of_integral = type_of_integral
 
         self.mu      = mu
         self.beta    = beta
@@ -68,10 +66,10 @@ class Compute_Loop_Function_Product_weak_scattering:
 
         return
 
-    def Compute_Hq_Average(self):
+    def Compute_Hq_Product(self):
 
         # compute the smooth grid contribution
-        self.Compute_Hq_Product(self.grid)
+        self.Compute_Hq(self.grid)
 
         # Compute the averaged product of H(q,w) H(-q,w)
         self.HqHq = 0.25* ( self.Hq_plus[0,0, :]*self.Hq_minus[0,0, :] +
@@ -80,7 +78,7 @@ class Compute_Loop_Function_Product_weak_scattering:
                             self.Hq_plus[1,1, :]*self.Hq_minus[1,1, :] )
 
 
-    def Compute_Hq_Product(self,grid):
+    def Compute_Hq(self,grid):
 
         # Loop on wedges in the 1BZ
         for wedge in grid.list_wedges:
@@ -120,8 +118,6 @@ class Compute_Loop_Function_Product_weak_scattering:
 
                                 self.Hq_plus[i_alpha,i_L, :]  += self.normalization*AreaIntegrator(wedge,MI)
                                 self.Hq_minus[i_alpha,i_L, :] += -self.normalization*AreaIntegrator(wedge,M_starI)
-
-
 
         return
 
