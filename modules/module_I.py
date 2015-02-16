@@ -439,7 +439,7 @@ class IGridFunction_weak_scattering:
 
         self.mu  = mu
         self.beta= beta
-        self.I0  = 1. # eV/a0^2, we can modify this value with post-processing
+        self.I0  = complex(1.,0.) # eV/a0^2, we can modify this value with post-processing
 
 
         self.build_indices()
@@ -506,7 +506,7 @@ class IGridFunction_weak_scattering:
             for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
 
                 list_xi3    = N.real(  list_epsilon3 - self.mu )
-                list_Fermi3 = function_fermi_occupation(list_xi1, 0.,self.beta)
+                list_Fermi3 = function_fermi_occupation(list_xi3, 0.,self.beta)
                 
                 # cutoff the 1/0 
                 den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
@@ -526,7 +526,6 @@ class IGridFunction_weak_scattering:
 
                         den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
                         den32  = self.cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
-
 
                         contribution = eta*self.I0*(df12_denom[:,N.newaxis]*den12 - df32_denom[:,N.newaxis]*den32)
 
