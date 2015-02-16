@@ -121,4 +121,4 @@ OkComputer = Compute_Loop_Function_Product(mu, beta, q_ph, E_ph, hw_ph, grid, li
 
 OkComputer.Compute_Hq_Product()
 
-write_to_file_weak_coupling(OkComputer, nmax_coarse, nmax_fine, nblock, hw_ph, filename) 
+write_to_file_weak_scattering(OkComputer, nmax_coarse, nmax_fine, nblock, hw_ph, filename) 
