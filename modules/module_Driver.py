@@ -68,10 +68,6 @@ reload(module_Integrators)
 from module_Integrators    import *
 
 
-import module_Compute_Loop_Function_Product
-reload(module_Compute_Loop_Function_Product)
-from module_Compute_Loop_Function_Product import *
-
 import module_Kramers_Kronig
 reload(module_Kramers_Kronig)
 from module_Kramers_Kronig import *
