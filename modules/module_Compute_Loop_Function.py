@@ -1,9 +1,12 @@
 #================================================================================
 #
-#           Module Compute_Loop_Function_Product
+#           Module Compute_Loop_Function
 #           ==========================================
 #
-#       This module computes the loop function, H^{alpha,nu}(q,hw), for a given nu,q.
+#       This module computes the loop function projected on the phonon frequency, 
+#               H^{alpha L}_{nu q}(hw_{nu q}), for a given nu,q.
+#
+#       This is then stored as the unitless parameters R^{alpha L}_{nu q} and I^{alpha L}_{nu q}
 #
 #================================================================================
 
@@ -15,12 +18,10 @@ from module_I import *
 from module_HardCoreKernel import *
 from module_Integrators import *
 
-class Compute_Loop_Function_Product:
+class Compute_Loop_Function:
 
-    def __init__(self, type_of_integral, mu, beta, q_vector, E_phonon_polarization, hw_ph, grid_singular,grid_smooth, \
-                    external_list_hw, kernel_Gamma_width, delta_width):
-
-        self.type_of_integral = type_of_integral
+    def __init__(self, mu, beta, q_vector, E_phonon_polarization, hw_ph, 
+                    grid_singular, grid_smooth, kernel_Gamma_width, delta_width):
 
         self.mu      = mu
         self.beta    = beta
@@ -32,8 +33,10 @@ class Compute_Loop_Function_Product:
         self.grid_singular    = deepcopy(grid_singular)
         self.grid_smooth      = deepcopy(grid_smooth)
 
-        self.list_hw = external_list_hw 
-        self.nhw     = len(external_list_hw)
+
+        # we do this to leverage code which is already there!
+        self.list_hw = N.array([hw_ph])
+
 
         # Widths
         self.delta_width = delta_width
@@ -48,12 +51,11 @@ class Compute_Loop_Function_Product:
 
         self.normalization = 1./(2.*N.pi**2)
 
-        # columns loop faster in C (and thus in python)
-        # First index is for x or y, second index is for frequency
+        # initialize parameters
+        self.initialize_R_and_I()
 
-        self.initialize_Hq()
 
-    def initialize_Hq(self):
+    def initialize_R_and_I(self):
         """
         Hq will be in fundamental units of [charge] x [velocity], e hbar / m a_0
         """
@@ -61,29 +63,33 @@ class Compute_Loop_Function_Product:
 
         # first index   : alpha = x, y
         # second index  : L = 'A','B' the impurity scattering site index
-        self.Hq_plus  = complex(0.,0.)*N.zeros([ 2, 2, self.nhw])
-        self.Hq_minus = complex(0.,0.)*N.zeros([ 2, 2, self.nhw])
+
+        self.Rq_smooth   = complex(0.,0.)*N.zeros([ 2, 2])
+        self.Iq_smooth   = complex(0.,0.)*N.zeros([ 2, 2])
+
+        self.Rq_singular = complex(0.,0.)*N.zeros([ 2, 2])
+        self.Iq_singular = complex(0.,0.)*N.zeros([ 2, 2])
+
+        self.Rq          = complex(0.,0.)*N.zeros([ 2, 2])
+        self.Iq          = complex(0.,0.)*N.zeros([ 2, 2])
 
         return
 
-    def Compute_Hq_Product(self):
-
+    def Compute_R_and_I(self):
 
         # compute the smooth grid contribution
-        self.Compute_Hq_Product_per_grid(self.grid_smooth,'smooth')
+        self.Compute_R_and_I_per_grid(self.grid_smooth,'smooth')
 
         # compute the singular grid contribution
-        self.Compute_Hq_Product_per_grid(self.grid_singular,'singular')
+        self.Compute_R_and_I_per_grid(self.grid_singular,'singular')
 
-        # Compute the averaged product of H(q,w) H(-q,w)
-        self.HqHq = 0.25* ( self.Hq_plus[0,0, :]*self.Hq_minus[0,0, :] +
-                            self.Hq_plus[1,0, :]*self.Hq_minus[1,0, :] +
-                            self.Hq_plus[0,1, :]*self.Hq_minus[0,1, :] +
-                            self.Hq_plus[1,1, :]*self.Hq_minus[1,1, :] )
+        # Compute the sum
+        self.Rq = self.Rq_smooth + self.Rq_singular
+        self.Iq = self.Iq_smooth + self.Iq_singular
 
 
+    def Compute_R_and_I_per_grid(self,grid,type_of_integral):
 
-    def Compute_Hq_Product_per_grid(self,grid,type_of_integral):
 
         # Loop on wedges in the 1BZ
         for wedge in grid.list_wedges:
@@ -102,8 +108,8 @@ class Compute_Loop_Function_Product:
 
                         I_key = (n1,n2,n3)
                         I_index = Iq.index_dictionary[I_key]
-                        # dimensions [nk,nw]
-                        IElements = Iq.I[I_index,:,:]
+                        # dimensions [nk,nw = 1]
+                        IElements = Iq.I[I_index,:,0]
 
                         for i_alpha, alpha in zip([0,1],['x','y']):
                             for i_L, L in zip([0,1],['A','B']):
@@ -115,17 +121,36 @@ class Compute_Loop_Function_Product:
 
                                 # dimension nk
                                 MatrixElements_u = Mq.M[M_index,0,:]
-                                # MatrixElements_v = Mq.M[M_index,1,:] no longer in use
 
                                 MatrixElements_u_star = N.conjugate(MatrixElements_u)
 
                                 MI      = MatrixElements_u[:,N.newaxis]*IElements 
                                 M_starI = MatrixElements_u_star[:,N.newaxis]*IElements 
 
-                                self.Hq_plus[i_alpha,i_L, :]  +=  self.normalization*AreaIntegrator(wedge,MI)
-                                self.Hq_minus[i_alpha,i_L, :] += -self.normalization*AreaIntegrator(wedge,M_starI)
+                                # We use a trick to extract R and I
+                                #
+                                # We have H(q,w)  = sum M (R+iI)
+                                #         H(-q,w) = sum M^* (-R-iI)
+                                # such that
+                                #         H(q,w)+H^*(-q,w) = sum M I
+                                #         -----------------             
+                                #               2i
+                                # and      
+                                #         H(q,w)-H^*(-q,w) = sum M R
+                                #         -----------------             
+                                #               2 
 
 
+                                Hq_plus  =  self.normalization*AreaIntegrator(wedge,MI)[0] # only take one frequency
+                                Hq_minus = -self.normalization*AreaIntegrator(wedge,M_starI)[0]
+
+                                if type_of_integral == 'smooth':
+                                    self.Rq_smooth[i_alpha,i_L] +=  0.5   *( Hq_plus -   N.conjugate(Hq_minus) )
+                                    self.Iq_smooth[i_alpha,i_L] += -0.5*1j*( Hq_plus +   N.conjugate(Hq_minus) )
+
+                                elif type_of_integral == 'singular':
+                                    self.Rq_singular[i_alpha,i_L] +=  0.5   *( Hq_plus -   N.conjugate(Hq_minus) )
+                                    self.Iq_singular[i_alpha,i_L] += -0.5*1j*( Hq_plus +   N.conjugate(Hq_minus) )
 
         return
 
