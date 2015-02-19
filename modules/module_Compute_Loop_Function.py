@@ -54,7 +54,6 @@ class Compute_Loop_Function:
         # initialize parameters
         self.initialize_R_and_I()
 
-
     def initialize_R_and_I(self):
         """
         Hq will be in fundamental units of [charge] x [velocity], e hbar / m a_0
@@ -90,7 +89,6 @@ class Compute_Loop_Function:
 
     def Compute_R_and_I_per_grid(self,grid,type_of_integral):
 
-
         # Loop on wedges in the 1BZ
         for wedge in grid.list_wedges:
 
@@ -109,7 +107,7 @@ class Compute_Loop_Function:
                         I_key = (n1,n2,n3)
                         I_index = Iq.index_dictionary[I_key]
                         # dimensions [nk,nw = 1]
-                        IElements = Iq.I[I_index,:,0]
+                        IElements = Iq.I[I_index,:,:]
 
                         for i_alpha, alpha in zip([0,1],['x','y']):
                             for i_L, L in zip([0,1],['A','B']):
