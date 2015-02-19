@@ -123,22 +123,22 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
     REPH[:] = N.real(CS.E_ph)
     IEPH[:] = N.imag(CS.E_ph)
 
-    Re_R_smooth[:,:] = N.real(self.Rq_smooth)
-    Im_R_smooth[:,:] = N.imag(self.Rq_smooth)
-    Re_I_smooth[:,:] = N.real(self.Iq_smooth)
-    Im_I_smooth[:,:] = N.imag(self.Iq_smooth)
+    Re_R_smooth[:,:] = N.real(CS.Rq_smooth)
+    Im_R_smooth[:,:] = N.imag(CS.Rq_smooth)
+    Re_I_smooth[:,:] = N.real(CS.Iq_smooth)
+    Im_I_smooth[:,:] = N.imag(CS.Iq_smooth)
 
 
-    Re_R_singular[:,:] = N.real(self.Rq_singular)
-    Im_R_singular[:,:] = N.imag(self.Rq_singular)
-    Re_I_singular[:,:] = N.real(self.Iq_singular)
-    Im_I_singular[:,:] = N.imag(self.Iq_singular)
+    Re_R_singular[:,:] = N.real(CS.Rq_singular)
+    Im_R_singular[:,:] = N.imag(CS.Rq_singular)
+    Re_I_singular[:,:] = N.real(CS.Iq_singular)
+    Im_I_singular[:,:] = N.imag(CS.Iq_singular)
 
 
-    Re_R[:,:] = N.real(self.Rq)
-    Im_R[:,:] = N.imag(self.Rq)
-    Re_I[:,:] = N.real(self.Iq)
-    Im_I[:,:] = N.imag(self.Iq)
+    Re_R[:,:] = N.real(CS.Rq)
+    Im_R[:,:] = N.imag(CS.Rq)
+    Re_I[:,:] = N.real(CS.Iq)
+    Im_I[:,:] = N.imag(CS.Iq)
 
 
     ncfile.close()
