@@ -9,7 +9,6 @@
 #================================================================================
 from module_Constants import *
 
-
 from Scientific.IO.NetCDF import NetCDFFile as Dataset
 
 def write_splmake(splmake_tuple,filename,mu,beta,delta):
@@ -71,7 +70,7 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
 
     """
     Writes the results of a computation to a netcdf file.
-    Takes a Compute_Loop_Function_Product object as input; it is assumed that 
+    Takes a Compute_Loop_Function object as input; it is assumed that 
     this object has already computed what we wish to write!
     """
 
@@ -96,81 +95,52 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
     setattr(ncfile,'phonon_frequency',hw_ph) 
 
     # --- Create dimensions ----
-    ncfile.createDimension("number_of_frequencies",CS.list_hw.shape[0])
     ncfile.createDimension("xy",2)
+    ncfile.createDimension("L_AB",2)
     ncfile.createDimension("phonon_alpha_kappa",6)
-
 
     # --- Write data ----
     Q      = ncfile.createVariable("q_phonon",'d',('xy',))
     REPH   = ncfile.createVariable("Re_E_phonon",'d',('phonon_alpha_kappa',))
     IEPH   = ncfile.createVariable("Im_E_phonon",'d',('phonon_alpha_kappa',))
-    HW     = ncfile.createVariable("list_hw",'d',('number_of_frequencies',))
 
-    RHH    = ncfile.createVariable("Re_HH",'d',('number_of_frequencies',))
-    IHH    = ncfile.createVariable("Im_HH",'d',('number_of_frequencies',))
+    Re_R_smooth = ncfile.createVariable("Re_R_smooth",'d',('xy','L_AB'))
+    Im_R_smooth = ncfile.createVariable("Im_R_smooth",'d',('xy','L_AB'))
+    Re_I_smooth = ncfile.createVariable("Re_I_smooth",'d',('xy','L_AB'))
+    Im_I_smooth = ncfile.createVariable("Im_I_smooth",'d',('xy','L_AB'))
 
+    Re_R_singular = ncfile.createVariable("Re_R_singular",'d',('xy','L_AB'))
+    Im_R_singular = ncfile.createVariable("Im_R_singular",'d',('xy','L_AB'))
+    Re_I_singular = ncfile.createVariable("Re_I_singular",'d',('xy','L_AB'))
+    Im_I_singular = ncfile.createVariable("Im_I_singular",'d',('xy','L_AB'))
 
-    Q[:]    = CS.q
-    REPH[:] = N.real(CS.E_ph)
-    IEPH[:] = N.imag(CS.E_ph)
-    HW[:]   = N.real(CS.list_hw)
-
-    RHH[:] = N.real(CS.HqHq)
-    IHH[:] = N.imag(CS.HqHq)
-
-
-    ncfile.close()
-
-
-
-def write_to_file_weak_scattering(CS, nmax_coarse, nmax_fine, nblocks, hw_ph,filename):
-    """
-    Writes the results of a computation to a netcdf file.
-    Takes a Compute_Loop_Function_Product object as input; it is assumed that 
-    this object has already computed what we wish to write!
-    """
-
-    #--------------------------------------------
-    # Write to netcdf file 
-    #--------------------------------------------
-    ncfile   = Dataset(filename,'w')
-
-    # --- set various attributes, identifying the parameters of the computation ----
-    setattr(ncfile,'mu',CS.mu) 
-    setattr(ncfile,'beta',CS.beta) 
-    setattr(ncfile,'acell',acell) 
-    setattr(ncfile,'Area',Area) 
-    setattr(ncfile,'nmax_coarse',nmax_coarse) 
-    setattr(ncfile,'nmax_fine',nmax_fine) 
-    setattr(ncfile,'n_blocks_coarse_to_fine',nblocks) 
-    setattr(ncfile,'delta_width',CS.delta_width) 
-    setattr(ncfile,'phonon_frequency',hw_ph) 
-
-    # --- Create dimensions ----
-    ncfile.createDimension("number_of_frequencies",CS.list_hw.shape[0])
-    ncfile.createDimension("xy",2)
-    ncfile.createDimension("phonon_alpha_kappa",6)
-
-
-    # --- Write data ----
-    Q      = ncfile.createVariable("q_phonon",'d',('xy',))
-    REPH   = ncfile.createVariable("Re_E_phonon",'d',('phonon_alpha_kappa',))
-    IEPH   = ncfile.createVariable("Im_E_phonon",'d',('phonon_alpha_kappa',))
-    HW     = ncfile.createVariable("list_hw",'d',('number_of_frequencies',))
-
-    RHH    = ncfile.createVariable("Re_HH",'d',('number_of_frequencies',))
-    IHH    = ncfile.createVariable("Im_HH",'d',('number_of_frequencies',))
-
+    Re_R = ncfile.createVariable("Re_R",'d',('xy','L_AB'))
+    Im_R = ncfile.createVariable("Im_R",'d',('xy','L_AB'))
+    Re_I = ncfile.createVariable("Re_I",'d',('xy','L_AB'))
+    Im_I = ncfile.createVariable("Im_I",'d',('xy','L_AB'))
 
     Q[:]    = CS.q
     REPH[:] = N.real(CS.E_ph)
     IEPH[:] = N.imag(CS.E_ph)
-    HW[:]   = N.real(CS.list_hw)
 
-    RHH[:] = N.real(CS.HqHq)
-    IHH[:] = N.imag(CS.HqHq)
+    Re_R_smooth[:,:] = N.real(self.Rq_smooth)
+    Im_R_smooth[:,:] = N.imag(self.Rq_smooth)
+    Re_I_smooth[:,:] = N.real(self.Iq_smooth)
+    Im_I_smooth[:,:] = N.imag(self.Iq_smooth)
+
+
+    Re_R_singular[:,:] = N.real(self.Rq_singular)
+    Im_R_singular[:,:] = N.imag(self.Rq_singular)
+    Re_I_singular[:,:] = N.real(self.Iq_singular)
+    Im_I_singular[:,:] = N.imag(self.Iq_singular)
+
+
+    Re_R[:,:] = N.real(self.Rq)
+    Im_R[:,:] = N.imag(self.Rq)
+    Re_I[:,:] = N.real(self.Iq)
+    Im_I[:,:] = N.imag(self.Iq)
 
 
     ncfile.close()
+
 
