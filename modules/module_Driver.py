@@ -72,6 +72,12 @@ import module_Kramers_Kronig
 reload(module_Kramers_Kronig)
 from module_Kramers_Kronig import *
 
+import module_Compute_Loop_Function
+reload(module_Compute_Loop_Function)
+from module_Compute_Loop_Function import *
+
+
+
 import module_NETCDF
 reload(module_NETCDF)
 from module_NETCDF         import *
