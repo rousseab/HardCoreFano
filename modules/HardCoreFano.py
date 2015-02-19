@@ -32,7 +32,7 @@ from module_Driver import *
 input_error   = False
 
 args = sys.argv[1:]
-if len(args) != 28:
+if len(args) != 26:
         input_error = True
 
 try:
@@ -47,37 +47,35 @@ try:
         nmax_fine_singular   = N.int(args[6])
         nblock_singular      = N.int(args[7])
 
-        n_hw                = N.int(args[8])
-        hw_max              = N.float(args[9])
-        delta_width         = N.float(args[10])
-        kernel_Gamma_width  = N.float(args[11])
+        delta_width         = N.float(args[8])
+        kernel_Gamma_width  = N.float(args[9])
 
 
-        hw_ph  = N.float(args[12])
-        q_ph1  = N.float(args[13])
-        q_ph2  = N.float(args[14])
+        hw_ph  = N.float(args[10])
+        q_ph1  = N.float(args[11])
+        q_ph2  = N.float(args[12])
 
-        re_E1x = N.float(args[15])
-        im_E1x = N.float(args[16])
-        re_E1y = N.float(args[17])
-        im_E1y = N.float(args[18])
-        re_E1z = N.float(args[19])
-        im_E1z = N.float(args[20])
+        re_E1x = N.float(args[13])
+        im_E1x = N.float(args[14])
+        re_E1y = N.float(args[15])
+        im_E1y = N.float(args[16])
+        re_E1z = N.float(args[17])
+        im_E1z = N.float(args[18])
 
-        re_E2x = N.float(args[21])
-        im_E2x = N.float(args[22])
-        re_E2y = N.float(args[23])
-        im_E2y = N.float(args[24])
-        re_E2z = N.float(args[25])
-        im_E2z = N.float(args[26])
-        filename = args[27]
+        re_E2x = N.float(args[19])
+        im_E2x = N.float(args[20])
+        re_E2y = N.float(args[21])
+        im_E2y = N.float(args[22])
+        re_E2z = N.float(args[23])
+        im_E2z = N.float(args[24])
+        filename = args[25]
 except:
         input_error   = True
 
 
 if input_error:
         print 'Something is wrong with input parameters!'
-        print 'HardCoreFano.py  <mu> <T> <nk_grid_coarse_smooth> <nk_grid_fine_smooth> <nblocks_smooth> <<nk_grid_coarse_singular> <nk_grid_fine_singular> <nblocks_singular> <n_hw> <hw_max> <Gamma> <hw_ph> <q_ph> <E_ph> <output_filename>'
+        print 'HardCoreFano.py  <mu> <T> <nk_grid_coarse_smooth> <nk_grid_fine_smooth> <nblocks_smooth> <<nk_grid_coarse_singular> <nk_grid_fine_singular> <nblocks_singular>  <Gamma> <hw_ph> <q_ph> <E_ph> <output_filename>'
         print '                mu            :     chemical potential, in eV'
         print '                T             :     temperature, in Kelvin'
         print ' SMOOTH         nk_grid_coarse:     parameter specifying how dense the coarse k-grid will be for the smooth grid'
@@ -86,8 +84,6 @@ if input_error:
         print ' SINGULAR       nk_grid_coarse:     parameter specifying how dense the coarse k-grid will be for the singular grid'
         print ' SINGULAR       nk_grid_fine  :     parameter specifying how dense the fine k-grid will be for the singular grid'
         print ' SINGULAR       nblocks       :     parameter specifying how many coarse blocks will be made fine for the singular grid'
-        print '                n_hw          :     number of points on frequency grid'
-        print '                hw_max        :     maximum frequency on frequency grid, in eV'
         print '                delta_width   :     width for delta-functions, in eV'
         print '           kernel_Gamma_width :     Broadening used in the scattering kernel function, in eV'
         print '                hw_ph         :     phonon energy, in eV'
@@ -117,20 +113,11 @@ grid_smooth = TesselationDoubleGrid(nmax_coarse_smooth, nmax_fine_smooth, nblock
 clip_energy   = N.abs(mu)+0.5
 grid_singular = TesselationDoubleGrid(nmax_coarse_singular, nmax_fine_singular, nblock_singular, include_Gamma,clip_grid=True,clip_energy=clip_energy)
 
-# We suppose that the grid is regular and goes from 100 meV to hw_max.
-
-hw_min = 0.100 # meV
-
-d_hw         = (hw_max-hw_min)/(n_hw-1.)
-iloop        = N.arange(n_hw)
-list_hw      = hw_min+d_hw*iloop
-
-
 #================================================================================
 #       Compute the Hq function 
 #================================================================================
 
-OkComputer = Compute_Loop_Function_Product(type, mu, beta, q_ph, E_ph, hw_ph, grid_singular, grid_smooth, list_hw, kernel_Gamma_width, delta_width)
+OkComputer = Compute_Loop_Function(mu, beta, q_ph, E_ph, hw_ph, grid_singular, grid_smooth, kernel_Gamma_width, delta_width)
 
 OkComputer.Compute_Hq_Product()
 
