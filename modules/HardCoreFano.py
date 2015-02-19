@@ -15,9 +15,9 @@ import socket
 hostname = socket.gethostname().split('.')[0]
 
 if 'mbpdeinllation' in hostname:
-    top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_5.0/'
+    top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_6.0/'
 else:
-    top_dir = '/RQusagers/roussea4/python_depository/HCF_5.0/'
+    top_dir = '/RQusagers/roussea4/python_depository/HCF_6.0/'
 
 
 sys.path.append(top_dir)
