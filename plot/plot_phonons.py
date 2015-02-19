@@ -53,7 +53,7 @@ for hw , hwr in zip(HW.transpose(),HWr.transpose()):
             label2 = '__nolabel__'
 
     ax.plot(kpath.list_x,1000*hwr,'b--',lw=4,label=label2)
-    ax.plot(kpath.list_x,1000*hw,'r-',lw=4,label=label1)
+    #ax.plot(kpath.list_x,1000*hw,'r-',lw=4,label=label1)
 
 
 ax.set_title(r'phonon dispersion of Graphene')

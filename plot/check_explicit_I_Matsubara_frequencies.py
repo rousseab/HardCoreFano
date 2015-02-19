@@ -223,7 +223,8 @@ mu   = -0.400 # eV
 
 
 k_vector = N.random.random(2)*twopia
-q_vector = N.random.random(2)*twopia
+#q_vector = N.random.random(2)*twopia
+q_vector = N.array([0.001,0.])
 
 #k_vector = N.array([ 0.63891072,  0.5939504 ])
 #q_vector = N.array([ 0.11364837,  0.38050302])

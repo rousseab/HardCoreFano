@@ -61,7 +61,8 @@ list_R, list_FC  =  build_force_constants_Dubay_using_symmetry()
 Renormalizor = CompteMauriRenormalize(path,list_FC,list_R)
 
 
-q_vector = N.random.random(2)/10.*twopia
+#q_vector = N.random.random(2)/10.*twopia
+q_vector = N.array([0.,0.])
 list_hw, list_hw_renormalized, Eq = Renormalizor.get_frequency_and_polarization(q_vector)
 nu = N.random.random_integers(0,5)
 E_phonon_polarization = Eq[:,nu]

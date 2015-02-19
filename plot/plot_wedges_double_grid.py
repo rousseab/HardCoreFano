@@ -24,26 +24,19 @@ nmax_coarse = 8
 nmax_fine   = 256
 n_blocks_coarse_to_fine = 2
 clip_grid = True
-
-nmax_coarse = 4
-nmax_fine   = 8
-n_blocks_coarse_to_fine = 2
-clip_grid = False
 """
-nmax_coarse = 32
-nmax_fine   = 128
-n_blocks_coarse_to_fine = 8
+nmax_coarse = 16
+nmax_fine   = 64
+n_blocks_coarse_to_fine = 6
 clip_grid = False
-
-
 
 #include_Gamma = True
 include_Gamma = False
 
 mu = -0.400 # eV
-hw =  0.250 # eV
+hw =  0.200 # eV
 
-clip_energy = N.abs(mu)+0.5 # eV
+clip_energy = N.abs(mu)+0.50 # eV
 
 #grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma )
 t1=time.time()
@@ -103,13 +96,17 @@ k_hw = N.abs(hw)/hvF
 
 c = N.cos(N.pi/3.)
 s = N.sin(N.pi/3.)
-list_centers = N.array([ [-2./3.,0.], [ 2./3.,0.], 2./3.*N.array([c,s]), 
+list_centers = N.array([ [0.,0.],[-2./3.,0.], [ 2./3.,0.], 2./3.*N.array([c,s]), 
                            2./3.*N.array([c,-s]), 2./3.*N.array([-c,s]), 2./3.*N.array([-c,-s])]) 
 
 rad_mu  = k_mu/twopia
 
-rad_mu_plus_hw  = (k_mu+k_hw)/twopia
-rad_mu_minus_hw = (k_mu-k_hw)/twopia
+rad_mu_plus_hw  = (2*k_mu+k_hw)/twopia
+rad_mu_minus_hw = (2*k_mu-k_hw)/twopia
+#rad_mu_plus_hw  = (k_mu+k_hw)/twopia
+#rad_mu_minus_hw = (k_mu-k_hw)/twopia
+
+
 
 
 rad_upper_limit = clip_energy/hvF/twopia
@@ -124,8 +121,6 @@ for center in list_centers:
     x = center[0]+rad_upper_limit*N.cos(th)
     y = center[1]+rad_upper_limit*N.sin(th)
     ax.plot(x, y,'g--',lw=2)
-
-
 
 
     for rad in [rad_mu_plus_hw ,rad_mu_minus_hw ]: 

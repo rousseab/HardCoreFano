@@ -37,45 +37,41 @@ lw  = 3
 
 list_kernel_delta_wdith = [0.05,0.100,0.150,0.200]
 
+normalization = 0.5/D_cutoff*density
 for delta in list_kernel_delta_wdith:
-
-
-    list_z = list_xi+1j*delta
-
-    """
-    gamma  = get_gamma(list_z)
-    Sigma_normalized = 0.5*gamma/D_cutoff*density
-    re_Sigma = N.real(Sigma_normalized)
-    im_Sigma = N.imag(Sigma_normalized)
-    """
-
-    normalization = 0.5/D_cutoff*density
 
     re_Sigma = get_KR(list_xi,delta)*normalization
     im_Sigma =-get_KI(list_xi,delta)*normalization
 
-
-
     line, = ax1.plot(list_xi/D_cutoff,-im_Sigma,'-',alpha=1.0,lw=lw,label='$\Gamma_\gamma= %4.1f$ meV'%(1000*delta))
+    ax2.plot(list_xi/D_cutoff,re_Sigma,'-',alpha=1.0,lw=lw,label='__nolabel__')
 
 
-    ax2.plot(list_xi/D_cutoff,re_Sigma,'-',alpha=1.0,lw=lw,label='$\Gamma_\gamma= %4.1f$ meV'%(1000*delta))
+I0 = 10. # eV a0^2
+
+for I0 in [1.,10.,50.]:
+    re_Sigma_I0 = I0*normalization
+    ax2.plot(list_xi/D_cutoff,re_Sigma_I0*N.ones_like(list_xi),'--',alpha=1.0,lw=lw,label='$I_0= %4.1f$ eV $a_0^2$'%(I0))
+
 
 
 
 for ax in list_ax:
-    ax.set_xlabel('$\\xi/D$')
+    ax.set_xlabel('$\\xi/D$',labelpad=20)
     ax.legend(loc=0,fancybox=True,shadow=True)
     ax.grid(True,linestyle='-',color='grey',alpha=0.5)
 
     ax.legend(loc=0,fancybox=True,shadow=True)
 
 
-ax1.set_ylabel('-Im$[\Sigma(\\xi)]/(n_i D)$')
-ax2.set_ylabel('Re$[\Sigma(\\xi)]/(n_i D)$')
+ax1.set_ylabel(r'-$N/N_{imp}$ $\times$ Im$[\Sigma(\xi)]/D$')
+ax2.set_ylabel(r'$N/N_{imp}$ $\times$ Re$[\Sigma(\xi)]/D$')
+
+ax1.set_xlim([-0.8,0.8])
+ax2.set_xlim([-0.8,0.8])
 
 # adjust the figure so that there is no wasted space
-fig1.suptitle('Electronic Self-Energy, Self-Consistent Born approx. with broadening')
+#fig1.suptitle('Electronic Self-Energy, Self-Consistent Born approx. with broadening')
 fig1.subplots_adjust(   left    =   0.07,
                         bottom  =   0.15,
                         right   =   0.95,

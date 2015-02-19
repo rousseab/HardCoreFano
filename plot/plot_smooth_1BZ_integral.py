@@ -90,15 +90,16 @@ beta = 1./(kB*T)
 
 
 nmax_coarse = 32
-#nmax_fine   = 256
-nmax_fine   = 128
-n_blocks_coarse_to_fine = 5
+nmax_fine   = 256
+#nmax_fine   = 128
+
+n_blocks_coarse_to_fine = 12
 #include_Gamma = True
 include_Gamma = False
 
 mu = -0.400 # eV
-hw =  0.200
-delta_width = 0.050 # eV
+hw =  0.160
+kernel_Gamma_width = 0.200 # eV
 
 t1 = time.time()
 grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma, clip_grid=False)
@@ -108,8 +109,8 @@ print 'creating grid time: %5.3f sec.'%(t2-t1)
 
 
 
-filename = 'scattering_spline_mu=%4.3f_eV_delta=%4.3f_eV.nc'%(mu,delta_width)
-SK = ScatteringKernel(mu,beta,delta_width)
+filename = 'scattering_spline_mu=%4.3f_eV_delta=%4.3f_eV.nc'%(mu,kernel_Gamma_width)
+SK = ScatteringKernel(mu,beta,kernel_Gamma_width)
 #SK.build_scattering_kernel()
 #SK.build_and_write_spline_parameters(filename)
 SK.read_spline_parameters(filename)
@@ -117,7 +118,7 @@ SK.read_spline_parameters(filename)
 
 K = 2./3.*twopia*N.array([1.,0.])
 
-q  = N.array([0.020,0.03])*twopia
+q  = K+N.array([0.020,0.03])*twopia
 nq = N.linalg.norm(q)
 q_vec = q
 hatQ  = q/nq
@@ -199,7 +200,9 @@ for i,wedge in enumerate(grid.list_wedges):
     t = wedge.triangles_indices
     fc = (i+1)*N.arange(len(t))[::-1]
         
-    image_re = ax1.tripcolor(x,y, N.real(list_Fk[:,0]), shading='gouraud', edgecolors='k',cmap=plt.cm.spectral_r)
+    image_data = N.log( N.abs(list_Fk[:,0]))
+    #image_data =  N.real(list_Fk[:,0])
+    image_re = ax1.tripcolor(x,y,image_data , shading='gouraud', edgecolors='k',cmap=plt.cm.spectral_r)
 
     list_images_re.append(image_re)
 

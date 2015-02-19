@@ -20,9 +20,7 @@ import matplotlib.cm as cm
 import matplotlib.ticker as ticker
 
 def fmt(x, pos):
-    a, b = '{:.2e}'.format(x).split('e')
-    b = int(b)
-    return r'${} \times 10^{{{}}}$'.format(a, b)
+    return r'${}$'.format(x)
 
 mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
@@ -39,13 +37,13 @@ n_blocks_coarse_to_fine = 2
 include_Gamma = False
 
 mu = -0.400 # eV
-hw =  0.200
-
-eta = -1.
+hw =  0.250
+clip_energy = N.abs(mu)+0.5
+eta =  -1.
 
 t1 = time.time()
 grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma,\
-                                clip_grid=False,clip_energy=0.)
+                                clip_grid=True,clip_energy=clip_energy)
 t2 = time.time()
 
 print 'creating grid time: %5.3f sec.'%(t2-t1)
@@ -76,7 +74,6 @@ for i,wedge in enumerate(grid.list_wedges):
 
     list_xi2k  = -list_epsilon_k-mu 
 
-
     Fermi2 = function_fermi_occupation(list_xi2k-eta*hw,0.,beta)
     Fermi1 = function_fermi_occupation(list_xi2k,0.,beta)
 
@@ -95,7 +92,9 @@ for i,wedge in enumerate(grid.list_wedges):
     t = wedge.triangles_indices
     fc = (i+1)*N.arange(len(t))[::-1]
         
-    image_re = ax1.tripcolor(x,y, N.real(list_Fk[:,0]), shading='gouraud', edgecolors='k',cmap=plt.cm.spectral_r)
+    #image_data = N.real(list_Fk[:,0])
+    image_data = N.log10(N.abs(list_Fk[:,0]))
+    image_re   = ax1.tripcolor(x,y,image_data, shading='gouraud', edgecolors='k',cmap=plt.cm.spectral_r)
 
     list_images_re.append(image_re)
 
@@ -129,6 +128,7 @@ list_centers = N.array([ [-2./3.,0.], [ 2./3.,0.], 2./3.*N.array([c,s]),
                            2./3.*N.array([c,-s]), 2./3.*N.array([-c,s]), 2./3.*N.array([-c,-s])]) 
 
 rad_mu    = N.abs(mu)/hvF/twopia
+rad_mu_w  = (N.abs(hw)+N.abs(mu))/hvF/twopia
 
 th = N.arange(0.,2.*N.pi,0.01)
 for center in list_centers:
@@ -137,6 +137,13 @@ for center in list_centers:
     y = center[1]+rad_mu*N.sin(th)
 
     ax1.plot(x, y,'k-',lw=2)
+
+    x = center[0]+rad_mu_w*N.cos(th)
+    y = center[1]+rad_mu_w*N.sin(th)
+
+    ax1.plot(x, y,'y-',lw=2)
+
+
 
 
 

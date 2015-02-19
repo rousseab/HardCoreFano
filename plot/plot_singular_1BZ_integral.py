@@ -58,9 +58,13 @@ print 'creating grid time: %5.3f sec.'%(t2-t1)
 
 delta_width = 0.050 # eV
 
-K = 2./3.*twopia*N.array([1.,0.])
 
-q  = N.array([0.02,0.03])*twopia
+c  = N.cos(N.pi/3.)
+s  = N.sin(N.pi/3.)
+
+K = 2./3.*twopia*N.array([c,s])
+q  = K-0.5*N.array([c,s])*twopia
+
 nq = N.linalg.norm(q)
 q_vec = q
 hatQ  = q/nq

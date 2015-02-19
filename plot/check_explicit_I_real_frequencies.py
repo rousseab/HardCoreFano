@@ -90,7 +90,8 @@ beta = 1./(kB*T)
 mu   = -0.400 # eV
 
 k_vector = 1.00001*N.abs(mu)/hvF*N.array([1.,0.])
-q_vector = N.abs(mu)/hvF*N.array([-2.,0.])
+#q_vector = N.abs(mu)/hvF*N.array([-2.,0.])
+q_vector = N.array([0.,0.0001])
 
 wedge = DummyWedge(N.array([k_vector]))
 #q_vector = N.random.random(2)*twopia
