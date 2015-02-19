@@ -122,4 +122,3 @@ OkComputer = Compute_Loop_Function(mu, beta, q_ph, E_ph, hw_ph, grid_singular, g
 OkComputer.Compute_Hq_Product()
 
 write_to_file(OkComputer, nmax_coarse_smooth, nmax_fine_smooth, nblock_smooth, nmax_coarse_singular, nmax_fine_singular, nblock_singular, hw_ph, filename)
-
