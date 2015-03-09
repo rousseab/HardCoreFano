@@ -21,22 +21,22 @@ legendfonts = FontProperties(size=16)
 
 """
 nmax_coarse = 8
-nmax_fine   = 256
+nmax_fine   = 512
 n_blocks_coarse_to_fine = 2
 clip_grid = True
-"""
-nmax_coarse = 16
-nmax_fine   = 64
-n_blocks_coarse_to_fine = 6
-clip_grid = False
-
-#include_Gamma = True
 include_Gamma = False
+"""
 
-mu = -0.400 # eV
+nmax_coarse = 32
+nmax_fine   = 256
+n_blocks_coarse_to_fine = 12
+clip_grid = False
+include_Gamma = True
+
+mu = -0.100 # eV
 hw =  0.200 # eV
 
-clip_energy = N.abs(mu)+0.50 # eV
+clip_energy = N.abs(mu)+1.00 # eV
 
 #grid = TesselationDoubleGrid(nmax_coarse, nmax_fine, n_blocks_coarse_to_fine,include_Gamma )
 t1=time.time()
@@ -123,7 +123,7 @@ for center in list_centers:
     ax.plot(x, y,'g--',lw=2)
 
 
-    for rad in [rad_mu_plus_hw ,rad_mu_minus_hw ]: 
+    for rad in [rad_mu_plus_hw, rad_mu_minus_hw]: 
         x = center[0]+rad*N.cos(th)
         y = center[1]+rad*N.sin(th)
         ax.plot(x, y,'r-',lw=2)
