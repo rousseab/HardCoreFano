@@ -21,7 +21,7 @@ from module_Integrators import *
 class Compute_Loop_Function:
 
     def __init__(self, mu, beta, q_vector, E_phonon_polarization, hw_ph, 
-                    grid_singular, grid_smooth, kernel_Gamma_width, delta_width):
+                    grid, kernel_Gamma_width, Green_Gamma_width):
 
         self.mu      = mu
         self.beta    = beta
@@ -30,16 +30,11 @@ class Compute_Loop_Function:
         self.E_ph    = deepcopy(E_phonon_polarization)
         self.hw_ph   = deepcopy(hw_ph)
 
-        self.grid_singular    = deepcopy(grid_singular)
-        self.grid_smooth      = deepcopy(grid_smooth)
-
-
-        # we do this to leverage code which is already there!
-        self.list_hw = N.array([hw_ph])
+        self.grid    = deepcopy(grid)
 
 
         # Widths
-        self.delta_width = delta_width
+        self.Green_Gamma_width  = Green_Gamma_width
         self.kernel_Gamma_width = kernel_Gamma_width 
 
 
@@ -63,31 +58,12 @@ class Compute_Loop_Function:
         # first index   : alpha = x, y
         # second index  : L = 'A','B' the impurity scattering site index
 
-        self.Rq_smooth   = complex(0.,0.)*N.zeros([ 2, 2])
-        self.Iq_smooth   = complex(0.,0.)*N.zeros([ 2, 2])
-
-        self.Rq_singular = complex(0.,0.)*N.zeros([ 2, 2])
-        self.Iq_singular = complex(0.,0.)*N.zeros([ 2, 2])
-
         self.Rq          = complex(0.,0.)*N.zeros([ 2, 2])
         self.Iq          = complex(0.,0.)*N.zeros([ 2, 2])
 
         return
 
-    def Compute_R_and_I(self):
-
-        # compute the smooth grid contribution
-        self.Compute_R_and_I_per_grid(self.grid_smooth,'smooth')
-
-        # compute the singular grid contribution
-        self.Compute_R_and_I_per_grid(self.grid_singular,'singular')
-
-        # Compute the sum
-        self.Rq = self.Rq_smooth + self.Rq_singular
-        self.Iq = self.Iq_smooth + self.Iq_singular
-
-
-    def Compute_R_and_I_per_grid(self,grid,type_of_integral):
+    def Compute_R_and_I(self,grid):
 
         # Loop on wedges in the 1BZ
         for wedge in grid.list_wedges:
@@ -96,9 +72,10 @@ class Compute_Loop_Function:
             Mq = MGridFunction(q_vector=self.q,E_phonon_polarization=self.E_ph,hw_nu_q=self.hw_ph,wedge=wedge)
 
             # Compute the I function, which contains frequency dependence
-            Iq = IGridFunction(type_of_integral=type_of_integral, q_vector=self.q,list_hw=self.list_hw, \
-                                delta_width=self.delta_width,kernel_Gamma_width=self.kernel_Gamma_width, \
-                                mu=self.mu, beta=self.beta,  wedge=wedge)
+            Iq = IGridFunction(q_vector = self.q, hw = self.hw_ph, \
+                               delta_width = self.Green_Gamma_width, \
+                               kernel_Gamma_width = self.kernel_Gamma_width, \
+                               mu = self.mu, beta = self.beta,  wedge = wedge)
 
             for n1 in [0,1]:
                 for n2 in [0,1]:
@@ -138,17 +115,12 @@ class Compute_Loop_Function:
                                 #         -----------------             
                                 #               2 
 
-
                                 Hq_plus  =  self.normalization*AreaIntegrator(wedge,MI)[0] # only take one frequency
                                 Hq_minus = -self.normalization*AreaIntegrator(wedge,M_starI)[0]
 
-                                if type_of_integral == 'smooth':
-                                    self.Rq_smooth[i_alpha,i_L] +=  0.5   *( Hq_plus -   N.conjugate(Hq_minus) )
-                                    self.Iq_smooth[i_alpha,i_L] += -0.5*1j*( Hq_plus +   N.conjugate(Hq_minus) )
+                                self.Rq[i_alpha,i_L] +=  0.5   *( Hq_plus -   N.conjugate(Hq_minus) )
+                                self.Iq[i_alpha,i_L] += -0.5*1j*( Hq_plus +   N.conjugate(Hq_minus) )
 
-                                elif type_of_integral == 'singular':
-                                    self.Rq_singular[i_alpha,i_L] +=  0.5   *( Hq_plus -   N.conjugate(Hq_minus) )
-                                    self.Iq_singular[i_alpha,i_L] += -0.5*1j*( Hq_plus +   N.conjugate(Hq_minus) )
 
         return
 
