@@ -73,7 +73,7 @@ class Compute_Loop_Function:
 
             # Compute the I function, which contains frequency dependence
             Iq = IGridFunction(q_vector = self.q, hw = self.hw_ph, \
-                               Green_Gamma_width = self.Green_Gamma_width, \
+                               Green_Gamma_width  = self.Green_Gamma_width, \
                                kernel_Gamma_width = self.kernel_Gamma_width, \
                                mu = self.mu, beta = self.beta,  wedge = wedge)
 
@@ -125,5 +125,3 @@ class Compute_Loop_Function:
 
 
         return
-
-
