@@ -40,7 +40,10 @@ class IGridFunction:
 
         self.Green_Gamma_width  = Green_Gamma_width
         self.kernel_Gamma_width = kernel_Gamma_width
-        self.delta_width        = 0.001 # eV, to avoid divergences
+
+        # Whenever the imaginary part in the denominator vanishes,
+        #  we'll use a Fadeeva broadening instead of a lorentzian broadening.
+        self.fadeeva_delta_width = 0.025 # eV, to avoid divergences
 
         self.mu  = mu
         self.beta= beta
@@ -98,7 +101,7 @@ class IGridFunction:
         xi2  = 1.*list_xi2
         xi2_minus_eta_hw = xi2-eta*self.hw
 
-        real_denominator = xi1-xi2_minus_eta_hw 
+        real_denominator = xi1-xi2+eta*self.hw
 
         Fermi_1          = function_fermi_occupation(xi1, 0., self.beta)
         Fermi_2          = function_fermi_occupation(xi2, 0., self.beta)
@@ -115,20 +118,37 @@ class IGridFunction:
 
         # Add each term, one by one. This may not be efficient, but it must be transparent
 
-        denominator = real_denominator  + 1j*eta*self.Green_Gamma_width 
+        one_on_denominator = 1./(real_denominator  + 1j*eta*self.Green_Gamma_width)
         numerator   = Fermi_2*( KR_xi2_minus_ehw + 1j*eta*KI_xi2_minus_ehw)-Fermi_1*KR_xi1
-        C +=  numerator/denominator
+        C +=  numerator*one_on_denominator 
 
 
-        denominator = real_denominator  + 1j*eta*self.delta_width  + 1j*(eta+1.)*self.Green_Gamma_width 
+        if eta == 1:
+            denominator = real_denominator + 1j*(eta+1.)*self.Green_Gamma_width 
+            one_on_denominator  = 1./denominator 
+        elif eta == -1:
+            one_on_denominator  = cutoff_denominator(self,real_denominator,eta*self.fadeeva_delta_width)
+        else:
+            print 'PROBLEM!'
+            sys.exit()
+
         numerator   = -0.5j*( Fermi_1*KI_xi1 + eta*Fermi_2_minus_ehw*KI_xi2_minus_ehw ) \
                       -0.5 *(fKI_KK_xi1 - fKI_KK_xi2_minus_ehw )
-        C +=  numerator/denominator
+        C +=  numerator*one_on_denominator 
 
-        denominator = real_denominator  + 1j*eta*self.delta_width  + 1j*(eta-1.)*self.Green_Gamma_width 
+
+        if eta == 1:
+            one_on_denominator  = cutoff_denominator(self,real_denominator,eta*self.fadeeva_delta_width)
+        elif eta == -1:
+            denominator = real_denominator  +  1j*(eta-1.)*self.Green_Gamma_width 
+            one_on_denominator  = 1./denominator 
+        else:
+            print 'PROBLEM!'
+            sys.exit()
+
         numerator   = -0.5j*(-Fermi_1*KI_xi1 + eta*Fermi_2_minus_ehw*KI_xi2_minus_ehw ) \
                       -0.5 *(fKI_KK_xi1 - fKI_KK_xi2_minus_ehw )
-        C +=  numerator/denominator
+        C +=  numerator*one_on_denominator
 
         return C
 
@@ -173,9 +193,13 @@ class IGridFunction:
         # Add each term, one by one. This may not be efficient, but it must be transparent
 
         denominator = real_denominator  + 1j*eta*self.delta_width
-        numerator   = Fermi_2* KR_xi2_minus_ehw + -Fermi_1*KR_xi1 \
+
+        """
+        numerator   = Fermi_2* KR_xi2_minus_ehw  - Fermi_1*KR_xi1 \
                         +1j*eta*(Fermi_2-Fermi_2_minus_ehw)*KI_xi2_minus_ehw \
                         -fKI_KK_xi1 + fKI_KK_xi2_minus_ehw 
+        """
+        numerator   = Fermi_2* KR_xi2_minus_ehw  - Fermi_1*KR_xi1
 
         C +=  numerator/denominator
 
@@ -221,15 +245,15 @@ class IGridFunction:
                 # Compute the C functions
                 for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
                     list_xi1 = list_epsilon1 - self.mu
-                    #C1       = self.get_C(list_xi1, list_xi2, eta)
-                    C1       = self.get_C_Vanishing_Gamma(list_xi1, list_xi2, eta)
+                    C1       = self.get_C(list_xi1, list_xi2, eta)
+                    #C1       = self.get_C_Vanishing_Gamma(list_xi1, list_xi2, eta)
 
                     list_C1.append(C1)
 
                 for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
                     list_xi3 = list_epsilon3 - self.mu
-                    #C3       = self.get_C(list_xi3, list_xi2, eta)
-                    C3       = self.get_C_Vanishing_Gamma(list_xi3, list_xi2, eta)
+                    C3       = self.get_C(list_xi3, list_xi2, eta)
+                    #C3       = self.get_C_Vanishing_Gamma(list_xi3, list_xi2, eta)
                     list_C3.append(C3)
 
 
@@ -249,7 +273,6 @@ class IGridFunction:
                         den13 = N.real(self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6))
 
                         contribution = -eta*den13*(C1-C3) 
-
 
                         # add the "smooth" part to the I function
                         self.I[index,:] += self.conversion_factor*contribution
