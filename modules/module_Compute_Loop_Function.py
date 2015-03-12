@@ -73,7 +73,7 @@ class Compute_Loop_Function:
 
             # Compute the I function, which contains frequency dependence
             Iq = IGridFunction(q_vector = self.q, hw = self.hw_ph, \
-                               delta_width = self.Green_Gamma_width, \
+                               Green_Gamma_width = self.Green_Gamma_width, \
                                kernel_Gamma_width = self.kernel_Gamma_width, \
                                mu = self.mu, beta = self.beta,  wedge = wedge)
 
@@ -83,8 +83,8 @@ class Compute_Loop_Function:
 
                         I_key = (n1,n2,n3)
                         I_index = Iq.index_dictionary[I_key]
-                        # dimensions [nk,nw = 1]
-                        IElements = Iq.I[I_index,:,:]
+                        # dimensions [nk]
+                        IElements = Iq.I[I_index,:]
 
                         for i_alpha, alpha in zip([0,1],['x','y']):
                             for i_L, L in zip([0,1],['A','B']):
@@ -94,13 +94,13 @@ class Compute_Loop_Function:
                                 M_index = Mq.index_dictionary[M_key]
 
 
-                                # dimension nk
+                                # dimension [nk]
                                 MatrixElements_u = Mq.M[M_index,0,:]
 
                                 MatrixElements_u_star = N.conjugate(MatrixElements_u)
 
-                                MI      = MatrixElements_u[:,N.newaxis]*IElements 
-                                M_starI = MatrixElements_u_star[:,N.newaxis]*IElements 
+                                MI      = MatrixElements_u*IElements 
+                                M_starI = MatrixElements_u_star*IElements 
 
                                 # We use a trick to extract R and I
                                 #
@@ -115,8 +115,10 @@ class Compute_Loop_Function:
                                 #         -----------------             
                                 #               2 
 
-                                Hq_plus  =  self.normalization*AreaIntegrator(wedge,MI)[0] # only take one frequency
-                                Hq_minus = -self.normalization*AreaIntegrator(wedge,M_starI)[0]
+                                # The AreaIntegrator routine expects an array with shape [nk,nw].
+                                # To leverage existing code, we artificially give MI a new dimension.
+                                Hq_plus  =  self.normalization*AreaIntegrator(wedge,MI[:,N.newaxis] )[0] # only take one frequency
+                                Hq_minus = -self.normalization*AreaIntegrator(wedge,M_starI[:,N.newaxis])[0]
 
                                 self.Rq[i_alpha,i_L] +=  0.5   *( Hq_plus -   N.conjugate(Hq_minus) )
                                 self.Iq[i_alpha,i_L] += -0.5*1j*( Hq_plus +   N.conjugate(Hq_minus) )
