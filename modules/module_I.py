@@ -127,7 +127,7 @@ class IGridFunction:
             denominator = real_denominator + 1j*(eta+1.)*self.Green_Gamma_width 
             one_on_denominator  = 1./denominator 
         elif eta == -1:
-            one_on_denominator  = self.cutoff_denominator(self,real_denominator,eta*self.fadeeva_delta_width)
+            one_on_denominator  = self.cutoff_denominator(real_denominator,eta*self.fadeeva_delta_width)
         else:
             print 'PROBLEM!'
             sys.exit()
@@ -138,7 +138,7 @@ class IGridFunction:
 
 
         if eta == 1:
-            one_on_denominator  = self.cutoff_denominator(self,real_denominator,eta*self.fadeeva_delta_width)
+            one_on_denominator  = self.cutoff_denominator(real_denominator,eta*self.fadeeva_delta_width)
         elif eta == -1:
             denominator = real_denominator  +  1j*(eta-1.)*self.Green_Gamma_width 
             one_on_denominator  = 1./denominator 
