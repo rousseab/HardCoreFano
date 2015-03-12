@@ -94,9 +94,9 @@ class IGridFunction:
 
         # Build some ingredients which we'll use over and over.
 
-        xi1  = list_xi
-        xi2  = list_xi2
-        xi2_minus_eta_hw = list_xi2-eta*self.hw
+        xi1  = 1.*list_xi
+        xi2  = 1.*list_xi2
+        xi2_minus_eta_hw = xi2-eta*self.hw
 
         real_denominator = xi1-xi2_minus_eta_hw 
 
@@ -205,101 +205,4 @@ class IGridFunction:
         return 
 
 
-
-
-def test_new_axis_slicing():
-    """
-    We do some pretty funky array slicing in the code generating I, and in particular
-    we use N.newaxis quite liberally. It will be crucial to make sure that the code does
-    exactly what we think it does. The following little test basically confirms 
-    that.
-
-    We could eventually turn this test into a unit test.
-    """
-
-    # fill these arrays with random  numbers. Make sure they have different
-    # dimensions
-    list_iwm = N.random.random(10)
-    list_gam = N.random.random(10)
-    list_xi  = N.random.random(20)
-    list_z2  = N.random.random(30)
-
-    t1 = (list_iwm[N.newaxis,N.newaxis,:]-list_xi[:,N.newaxis,N.newaxis])**2
-    t2 = list_z2[N.newaxis,:,N.newaxis]
-
-    # dimension [xi,z2,iwm]
-    D  = 1./(t1-t2)
-
-
-    G = 1./(list_xi[:,N.newaxis]- list_iwm[N.newaxis,:] )
-
-    # dimension [xi,iwm]
-    gG = G[:,:]*list_gam[N.newaxis,:] 
-
-    sum = N.sum( D[:,:,:]*gG[:,N.newaxis,:],axis=2)
-
-    error1 = 0.
-    error2 = 0.
-    error3 = 0.
-    error4 = 0.
-
-    for i,xi in enumerate(list_xi):
-        for j,z2 in enumerate(list_z2):
-            for k,iwm in enumerate(list_iwm):
-
-                explicit_D = 1./( (iwm-xi)**2 - z2)
-
-                difference = explicit_D-D[i,j,k] 
-
-                error1+= difference**2 
-
-    for i,xi in enumerate(list_xi):
-        for j,iwm in enumerate(list_iwm):
-            explicit_G = 1./(xi-iwm)
-
-            difference = explicit_G-G[i,j] 
-            error2+= difference**2 
-
-    for i,xi in enumerate(list_xi):
-        for j,(iwm,gam) in enumerate(zip(list_iwm,list_gam)):
-
-            explicit_G  = 1./(xi-iwm)
-            explicit_gG = explicit_G*gam  
-
-            difference = explicit_gG-gG[i,j] 
-            error3+= difference**2 
-
-    for i,xi in enumerate(list_xi):
-        for j,z2 in enumerate(list_z2):
-
-            explicit_sum = 0.
-            for k,(iwm,gam) in enumerate(zip(list_iwm,list_gam)):
-
-                explicit_D  = 1./( (iwm-xi)**2 - z2)
-                explicit_G  = 1./(xi-iwm)
-                explicit_gG = explicit_G*gam  
-
-                explicit_sum += explicit_D*explicit_gG 
-
-
-            difference = explicit_sum-sum[i,j] 
-
-            error4 += difference**2 
-
-
-
-    error1= N.sqrt(error1)
-    error2= N.sqrt(error2)
-    error3= N.sqrt(error3)
-    error4= N.sqrt(error4)
-
-    print 'ERROR 1: %12.4e'%error1
-    print 'ERROR 2: %12.4e'%error2
-    print 'ERROR 3: %12.4e'%error3
-    print 'ERROR 4: %12.4e'%error4
-
-    return
-
-if __name__=='__main__':
-    test_new_axis_slicing()
 
