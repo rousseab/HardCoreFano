@@ -67,10 +67,6 @@ def get_KI(list_energies,kernel_Gamma_width):
 
 class ScatteringKernel:
     """
-    This class will essentially produce the scattering kernel function L, which is given by
-
-    L(xi,nhw) = f(xi) KR(xi+mu-nhw) + i KramerKronig (KI)(xi+mu-nhw)
-
     The Kramers-Kronig integral will be performed on a dense mesh, and a spline will be used
     to interpolate function to any desired value.
     """
