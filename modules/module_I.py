@@ -30,26 +30,17 @@ class IGridFunction:
     we must multipy by conversion factor = Ha_to_eV
     """
 
-    def __init__(self, type_of_integral, q_vector,list_hw, delta_width, kernel_Gamma_width, mu, beta, wedge):
-
-
-        if type_of_integral == 'smooth':
-            self.smooth   = True
-            self.singular = False
-        elif type_of_integral == 'singular':
-            self.smooth   = False
-            self.singular = True
-        else :
-            print 'ERROR! Pick a type of integral: smooth or singular'
+    def __init__(self, q_vector, hw, Green_Gamma_width, kernel_Gamma_width, mu, beta, wedge):
 
         self.conversion_factor = Ha_to_eV
 
         self.q_vector    = q_vector
-        self.delta_width = delta_width
-        self.list_hw     = list_hw
+        self.hw          = hw
 
 
+        self.Green_Gamma_width  = Green_Gamma_width
         self.kernel_Gamma_width = kernel_Gamma_width
+        self.delta_width        = 0.001 # eV, to avoid divergences
 
         self.mu  = mu
         self.beta= beta
@@ -64,16 +55,12 @@ class IGridFunction:
         self.build_indices()
 
         self.nk   = len(wedge.list_k)
-        self.nw   = len(self.list_hw)
         self.dim  = len(self.index_dictionary)
 
         # I will be in units of [Length]^2 / [Enegy].
         # where all terms are in fundamental units
 
-        self.I    = complex(0.,0.)*N.zeros([self.dim,self.nk,self.nw])
-
-        self.epsilon_k = complex(0.,0.)*N.zeros([2,self.nk])
-        self.epsilon_kq= complex(0.,0.)*N.zeros([2,self.nk])
+        self.I    = complex(0.,0.)*N.zeros([self.dim,self.nk])
 
         self.build_I(wedge)
 
@@ -89,6 +76,62 @@ class IGridFunction:
                     key = (n1,n2,n3)
                     self.index_dictionary[key] = index
 
+    def get_C(self,list_xi, list_xi2, eta):
+        """
+        This routine computes the "C" function, which is fairly complicated to reproduce here.
+
+        We have
+
+        I_{n}(k,k+q,w) = -sum_{eta} eta  C(xi_{n1 k},eta hbar omega)-C(xi_{n3 k+q},eta hbar omega)
+                                         ---------------------------------------------------------
+                                                        xi_{n1 k} - xi_{n3 k+q}
+
+        We'll assume that list_xi1 and list_xi2 have the same dimension [nk].
+        """
+
+        # Initialize C
+        C = complex(0.,0.)*N.zeros_like(list_xi)
+
+        # Build some ingredients which we'll use over and over.
+
+        xi1  = list_xi
+        xi2  = list_xi2
+        xi2_minus_eta_hw = list_xi2-eta*self.hw
+
+        real_denominator = xi1-xi2_minus_eta_hw 
+
+        Fermi_1          = function_fermi_occupation(xi1, 0., self.beta)
+        Fermi_2          = function_fermi_occupation(xi2, 0., self.beta)
+        Fermi_2_minus_ehw= function_fermi_occupation(xi2_minus_eta_hw, 0., self.beta)
+
+        KR_xi1          = get_KR(xi1+self.mu,self.kernel_Gamma_width)
+        KI_xi1          = get_KI(xi1+self.mu,self.kernel_Gamma_width)
+
+        KR_xi2_minus_ehw= get_KR(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
+        KI_xi2_minus_ehw= get_KI(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
+
+        fKI_KK_xi1           = self.SK.get_fKI_KK(xi1)
+        fKI_KK_xi2_minus_ehw = self.SK.get_fKI_KK(xi2_minus_eta_hw)
+
+        # Add each term, one by one. This may not be efficient, but it must be transparent
+
+        denominator = real_denominator  + 1j*eta*self.Green_Gamma_width 
+        numerator   = Fermi_2*( KR_xi2_minus_ehw + 1j*eta*KI_xi2_minus_ehw)-Fermi_1*KR_xi1
+        C +=  numerator/denominator
+
+
+        denominator = real_denominator  + 1j*eta*self.delta_width  + 1j*(eta+1.)*self.Green_Gamma_width 
+        numerator   = -0.5j*( Fermi_1*KI_xi1 + eta*Fermi_2_minus_ehw*KI_xi2_minus_ehw ) \
+                      -0.5 *(fKI_KK_xi1 - fKI_KK_xi2_minus_ehw )
+        C +=  numerator/denominator
+
+        denominator = real_denominator  + 1j*eta*self.delta_width  + 1j*(eta-1.)*self.Green_Gamma_width 
+        numerator   = -0.5j*(-Fermi_1*KI_xi1 + eta*Fermi_2_minus_ehw*KI_xi2_minus_ehw ) \
+                      -0.5 *(fKI_KK_xi1 - fKI_KK_xi2_minus_ehw )
+        C +=  numerator/denominator
+
+        return C
+
     def cutoff_denominator(self,list_x,fadeeva_width):
         """
         This function returns an approximation to 1/(x+i delta) using the Faddeeva function
@@ -99,387 +142,6 @@ class IGridFunction:
 
         return den
 
-    def get_Y_smooth(self,list_xi, list_xi2, list_eta_hw):
-        """
-        This routine computes the "smooth" part of the Y function,
-
-        Y(xi,xi2,eta_hw) =  ( L(xi,0) -L(xi2-eta_hw, 0 ) ) / (xi-[xi2-eta_hw]).
-
-        It is understood that as xi1 -> xi2-eta_hw, the function should remain smooth. 
-        Care must be taken to avoid singularities.
-
-        We'll assume that list_xi1 and list_xi2 have the same dimension [nk], and list_eta_hw is [nw]
-        """
-
-        L1  = self.SK.get_L_oneD(list_xi)[:,N.newaxis]
-
-        u   = list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:]
-
-        shape = u.shape
-
-        L2  =  self.SK.get_L_oneD(u.flatten()).reshape(shape)
-
-        numerator = L1-L2
-
-        denominator = list_xi[:,N.newaxis]-list_xi2[:,N.newaxis]+list_eta_hw[N.newaxis,:]
-
-
-        # Where the denominator is too close to zero, replace by value for argument close to zero.
-        tol = 1e-6
-
-        I,J = N.nonzero( N.abs(denominator) < tol)
-        
-        # substitute with safe value, to not divide by zero        
-        denominator[I,J] = 1.
-        Y_smooth = numerator/denominator
-
-        # replace by derivative 
-
-        L1_safe_plus  = self.SK.get_L_oneD(list_xi[I]+tol)
-        L1_safe_minus = self.SK.get_L_oneD(list_xi[I]-tol)
-
-        # note: u[I,J] is a 1D array, not a 2D array. This is because I and J are arrays, not slicing operators
-        
-        L2_safe_plus  = self.SK.get_L_oneD(u[I,J]+tol)
-        L2_safe_minus = self.SK.get_L_oneD(u[I,J]-tol)
-
-        # I'm not sure why this strange derivative works better, but I find that it does for tol large (for debugging)
-        Y_smooth[I,J] = 0.5*((L1_safe_plus+L2_safe_plus)-(L1_safe_minus+L2_safe_minus))/(2.*tol)
-
-        return Y_smooth
-
-    def build_I(self,wedge):
-        if self.smooth:
-            self.build_I_smooth(wedge)
-            #self.build_I_smooth_intraband_only(wedge)
-        elif self.singular:
-            self.build_I_singular(wedge)
-            #self.build_I_singular_intraband_only(wedge)
-
-    def build_I_smooth(self,wedge):
-        """
-        All quantities are built here. It will be *crucial* to make
-        this code as transparent as possible, to avoid making mistakes!
-        """
-
-        list_k    = wedge.list_k
-        list_kq   = list_k + self.q_vector
-
-        eps_k     = function_epsilon_k(list_k)
-
-        list_epsilon_k = [-eps_k, eps_k]
-
-        eps_kq    = function_epsilon_k(list_kq)
-        list_epsilon_kq = [-eps_kq, eps_kq]
-
-
-        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
-
-            list_xi2 = N.real(  list_epsilon2 - self.mu )
-
-            for eta in [-1.,1.]:
-
-                list_eta_hw =  eta*self.list_hw
-
-                list_Y12 = []
-                list_Y32 = []
-
-                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
-
-                    list_xi1 = N.real(  list_epsilon1 - self.mu )
-
-                    Y12 = self.get_Y_smooth(list_xi1, list_xi2, list_eta_hw)
-                    list_Y12.append(Y12)
-
-                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
-
-                    list_xi3 = N.real(  list_epsilon3 - self.mu )
-
-                    Y32 = self.get_Y_smooth(list_xi3, list_xi2, list_eta_hw)
-                    list_Y32.append(Y32)
-
-
-                for n1, list_epsilon1, Y12 in zip([0,1],list_epsilon_k, list_Y12):
-
-                    list_xi1 = N.real(  list_epsilon1 - self.mu )
-
-
-                    for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
-
-                        list_xi3 = N.real(  list_epsilon3 - self.mu )
-
-
-                        key   = (n1,n2,n3)
-                        index = self.index_dictionary[key]
-
-                        # cutoff the 1/0 
-                        den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
-
-                        smooth_contribution = eta*den13[:,N.newaxis]*(Y12-Y32) 
-
-
-                        # add the "smooth" part to the I function
-                        self.I[index,:,:] += self.conversion_factor*smooth_contribution
-
-        return 
-
-    def build_I_smooth_intraband_only(self,wedge):
-        """
-        All quantities are built here. It will be *crucial* to make
-        this code as transparent as possible, to avoid making mistakes!
-
-        Only intraband contributions are considered, assuming mu < 0.
-        """
-
-        list_k    = wedge.list_k
-        list_kq   = list_k + self.q_vector
-
-        eps_k     = function_epsilon_k(list_k)
-
-        list_epsilon_k = [-eps_k, eps_k]
-
-        eps_kq    = function_epsilon_k(list_kq)
-        list_epsilon_kq = [-eps_kq, eps_kq]
-
-
-        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
-
-            list_xi2 = N.real(  list_epsilon2 - self.mu )
-
-            for eta in [-1.,1.]:
-
-                list_eta_hw =  eta*self.list_hw
-
-                list_Y12 = []
-                list_Y32 = []
-
-                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
-
-                    list_xi1 = N.real(  list_epsilon1 - self.mu )
-
-                    Y12 = self.get_Y_smooth(list_xi1, list_xi2, list_eta_hw)
-                    list_Y12.append(Y12)
-
-                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
-
-                    list_xi3 = N.real(  list_epsilon3 - self.mu )
-
-                    Y32 = self.get_Y_smooth(list_xi3, list_xi2, list_eta_hw)
-                    list_Y32.append(Y32)
-
-
-                for n1, list_epsilon1, Y12 in zip([0,1],list_epsilon_k, list_Y12):
-
-                    list_xi1 = N.real(  list_epsilon1 - self.mu )
-
-
-                    for n3, list_epsilon3, Y32 in zip([0,1],list_epsilon_kq,list_Y32):
-
-                        list_xi3 = N.real(  list_epsilon3 - self.mu )
-
-
-                        key   = (n1,n2,n3)
-                        index = self.index_dictionary[key]
-
-                        # cutoff the 1/0 
-                        den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
-
-                        smooth_contribution = eta*den13[:,N.newaxis]*(Y12-Y32) 
-
-                        if n1 == 0 and n2 == 0 and n3 == 0:
-                            smooth_contribution_intraband = smooth_contribution 
-                        else:
-                            smooth_contribution_intraband = complex(0.,0.)*N.zeros_like(smooth_contribution)
-
-                        # add the "smooth" part to the I function
-                        self.I[index,:,:] += self.conversion_factor*smooth_contribution_intraband
-
-        return 
-
-    def build_I_singular(self,wedge):
-        """
-        All quantities are built here. It will be *crucial* to make
-        this code as transparent as possible, to avoid making mistakes!
-        """
-
-        list_k    = wedge.list_k
-        list_kq   = list_k + self.q_vector
-
-        eps_k     = function_epsilon_k(list_k)
-
-        list_epsilon_k = [-eps_k, eps_k]
-
-        eps_kq    = function_epsilon_k(list_kq)
-        list_epsilon_kq = [-eps_kq, eps_kq]
-
-
-        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
-
-            list_xi2 = N.real(  list_epsilon2 - self.mu )
-
-            for eta in [-1.,1.]:
-
-                list_eta_hw =  eta*self.list_hw
-
-                KR = get_KR(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.kernel_Gamma_width)
-                KI = get_KI(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.kernel_Gamma_width)
-                
-
-                Fermi2 = function_fermi_occupation(list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:],0.,self.beta)
-                Fermi1 = function_fermi_occupation(list_xi2[:,N.newaxis],0.,self.beta)
-                dFermi = Fermi2-Fermi1  
-
-                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
-
-                    list_xi1 = N.real(  list_epsilon1 - self.mu )
-
-                    den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
-
-
-                    for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
-
-                        list_xi3 = N.real(  list_epsilon3 - self.mu )
-
-                        den32  = self.cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
-
-                        key   = (n1,n2,n3)
-                        index = self.index_dictionary[key]
-
-                        #singular_contribution = -eta*dFermi*den12*den32*KR
-                        # The previous expression *seems* to have an error, forgetting the contribution from KI. 
-                        singular_contribution = -eta*dFermi*den12*den32*(KR+1j*eta*KI)
-
-                        # add the "smooth" part to the I function
-                        self.I[index,:,:] += self.conversion_factor*singular_contribution
-
-        return 
-
-    def build_I_singular_intraband_only(self,wedge):
-        """
-        All quantities are built here. It will be *crucial* to make
-        this code as transparent as possible, to avoid making mistakes!
-        """
-
-        list_k    = wedge.list_k
-        list_kq   = list_k + self.q_vector
-
-        eps_k     = function_epsilon_k(list_k)
-
-        list_epsilon_k = [-eps_k, eps_k]
-
-        eps_kq    = function_epsilon_k(list_kq)
-        list_epsilon_kq = [-eps_kq, eps_kq]
-
-
-        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
-
-            list_xi2 = N.real(  list_epsilon2 - self.mu )
-
-            for eta in [-1.,1.]:
-
-                list_eta_hw =  eta*self.list_hw
-
-                KR = get_KR(list_xi2[:,N.newaxis]+self.mu-list_eta_hw[N.newaxis,:],self.kernel_Gamma_width)
-
-                Fermi2 = function_fermi_occupation(list_xi2[:,N.newaxis]-list_eta_hw[N.newaxis,:],0.,self.beta)
-                Fermi1 = function_fermi_occupation(list_xi2[:,N.newaxis],0.,self.beta)
-                dFermi = Fermi2-Fermi1  
-
-                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
-
-                    list_xi1 = N.real(  list_epsilon1 - self.mu )
-
-                    den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
-
-
-                    for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
-
-                        list_xi3 = N.real(  list_epsilon3 - self.mu )
-
-                        den32  = self.cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
-
-                        key   = (n1,n2,n3)
-                        index = self.index_dictionary[key]
-
-                        singular_contribution = -eta*dFermi*den12*den32*KR
-
-                        if n1 == 0 and n2 == 0 and n3 == 0:
-                            singular_contribution_intraband = singular_contribution 
-                        else:
-                            singular_contribution_intraband = complex(0.,0.)*N.zeros_like(singular_contribution)
-
-
-                        # add the "smooth" part to the I function
-                        self.I[index,:,:] += self.conversion_factor*singular_contribution_intraband 
-
-        return 
-
-
-class IGridFunction_weak_scattering:
-    """
-    Class which builds and contains the I_{{n}}(k,k+q,w) object, which
-    is the result of summing on all the G functions in the loop function.
-
-    All the band energies will be assumed to be in eV, and the gamma 
-    function is replaced by I0, the weak scattering limit,  in units of in eV x a0^2. 
-    The units of I are
-    
-        [ I ] ~ Length^2/ Energy
-
-    As computed, we'll have [ I ] ~ a0^2/eV. To convert to a0^2/Ha (atomic units),
-    we must multipy by conversion factor = Ha_to_eV
-    """
-
-    def __init__(self, q_vector,list_hw, delta_width, mu, beta, wedge):
-        self.conversion_factor = Ha_to_eV
-
-        self.q_vector    = q_vector
-        self.delta_width = delta_width
-        self.list_hw     = list_hw
-
-        self.mu  = mu
-        self.beta= beta
-        self.I0  = complex(1.,0.) # eV/a0^2, we can modify this value with post-processing
-
-
-        self.build_indices()
-
-
-        self.nk   = len(wedge.list_k)
-        self.nw   = len(self.list_hw)
-        self.dim  = len(self.index_dictionary)
-
-        # I will be in units of [Length]^2 / [Enegy].
-        # where all terms are in fundamental units
-
-        self.I    = complex(0.,0.)*N.zeros([self.dim,self.nk,self.nw])
-
-        self.epsilon_k = complex(0.,0.)*N.zeros([2,self.nk])
-        self.epsilon_kq= complex(0.,0.)*N.zeros([2,self.nk])
-
-        self.build_I(wedge)
-
-    def build_indices(self):
-
-        self.index_dictionary = {}
-                
-        index = -1
-        for n1 in [0,1]:
-            for n2 in [0,1]:
-                for n3 in [0,1]:
-                    index += 1 
-                    key = (n1,n2,n3)
-                    self.index_dictionary[key] = index
-
-    def cutoff_denominator(self,list_x,fadeeva_width):
-        """
-        This function returns an approximation to 1/(x+i delta) using the Faddeeva function
-        """
-        z   = list_x/fadeeva_width
-
-        den = -1j*SS.wofz(z)/fadeeva_width*N.sqrt(N.pi)
-
-        return den
 
     def build_I(self,wedge):
         """
@@ -498,44 +160,50 @@ class IGridFunction_weak_scattering:
         list_epsilon_kq = [-eps_kq, eps_kq]
 
 
-        for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+        for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
 
-            list_xi1    = N.real(  list_epsilon1 - self.mu )
-            list_Fermi1 = function_fermi_occupation(list_xi1, 0.,self.beta)
+            list_xi2 = list_epsilon2 - self.mu 
 
-            for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+            for eta in [-1.,1.]:
 
-                list_xi3    = N.real(  list_epsilon3 - self.mu )
-                list_Fermi3 = function_fermi_occupation(list_xi3, 0.,self.beta)
-                
-                # cutoff the 1/0 
-                den13 = N.real ( self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6) )
+                list_C1 = []
+                list_C3 = []
+
+                # Compute the C functions
+                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+                    list_xi1 = list_epsilon1 - self.mu
+                    C1       = self.get_C(list_xi1, list_xi2, eta)
+                    list_C1.append(C1)
+
+                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+                    list_xi3 = list_epsilon3 - self.mu
+                    C3       = self.get_C(list_xi3, list_xi2, eta)
+                    list_C3.append(C3)
 
 
-                for n2, list_epsilon2 in zip([0,1],list_epsilon_k):
+                for n1, list_epsilon1, C1 in zip([0,1],list_epsilon_k, list_C1):
 
-                    list_xi2    = N.real(  list_epsilon2 - self.mu )
-                    list_Fermi2 = function_fermi_occupation(list_xi2, 0.,self.beta)
+                    list_xi1 = list_epsilon1 - self.mu 
 
-                    df32_denom = (list_Fermi3-list_Fermi2)*den13 
-                    df12_denom = (list_Fermi1-list_Fermi2)*den13 
+                    for n3, list_epsilon3, C3 in zip([0,1],list_epsilon_kq,list_C3):
 
-                    for eta in [-1.,1.]:
+                        list_xi3 =  list_epsilon3 - self.mu
 
-                        list_eta_hw =  eta*self.list_hw
-
-                        den12  = self.cutoff_denominator(list_xi1[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
-                        den32  = self.cutoff_denominator(list_xi3[:,N.newaxis] - list_xi2[:,N.newaxis] +list_eta_hw[N.newaxis,:], eta*self.delta_width)
-
-                        contribution = eta*self.I0*(df12_denom[:,N.newaxis]*den12 - df32_denom[:,N.newaxis]*den32)
 
                         key   = (n1,n2,n3)
                         index = self.index_dictionary[key]
 
-                        # add  to the I function
-                        self.I[index,:,:] += self.conversion_factor*contribution
+                        # cutoff the 1/0 
+                        den13 = self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6)
+
+                        contribution = -eta*den13*(C1-C3) 
+
+
+                        # add the "smooth" part to the I function
+                        self.I[index,:] += self.conversion_factor*contribution
 
         return 
+
 
 
 
