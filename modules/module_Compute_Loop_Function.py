@@ -63,10 +63,10 @@ class Compute_Loop_Function:
 
         return
 
-    def Compute_R_and_I(self,grid):
+    def Compute_R_and_I(self):
 
         # Loop on wedges in the 1BZ
-        for wedge in grid.list_wedges:
+        for wedge in self.grid.list_wedges:
 
             # Compute matrix elements
             Mq = MGridFunction(q_vector=self.q,E_phonon_polarization=self.E_ph,hw_nu_q=self.hw_ph,wedge=wedge)
