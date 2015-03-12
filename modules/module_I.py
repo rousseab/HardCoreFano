@@ -194,7 +194,7 @@ class IGridFunction:
                         index = self.index_dictionary[key]
 
                         # cutoff the 1/0 
-                        den13 = self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6)
+                        den13 = N.real(self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6))
 
                         contribution = -eta*den13*(C1-C3) 
 
