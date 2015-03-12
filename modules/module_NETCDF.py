@@ -65,8 +65,7 @@ def read_splmake(filename):
 
     return splmake_tuple, file_mu, file_beta, file_delta
 
-def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
-                      nmax_coarse_singular, nmax_fine_singular, nblocks_singular, hw_ph,filename):
+def write_to_file(CS, nmax_coarse, nmax_fine, nblocks, hw_ph,filename):
 
     """
     Writes the results of a computation to a netcdf file.
@@ -84,13 +83,10 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
     setattr(ncfile,'beta',CS.beta) 
     setattr(ncfile,'acell',acell) 
     setattr(ncfile,'Area',Area) 
-    setattr(ncfile,'nmax_coarse_smooth',nmax_coarse_smooth) 
-    setattr(ncfile,'nmax_fine_smooth',nmax_fine_smooth) 
-    setattr(ncfile,'n_blocks_coarse_to_fine_smooth',nblocks_smooth) 
-    setattr(ncfile,'nmax_coarse_singular',nmax_coarse_singular) 
-    setattr(ncfile,'nmax_fine_singular',nmax_fine_singular) 
-    setattr(ncfile,'n_blocks_coarse_to_fine_singular',nblocks_singular) 
-    setattr(ncfile,'delta_width',CS.delta_width) 
+    setattr(ncfile,'nmax_coarse',nmax_coarse) 
+    setattr(ncfile,'nmax_fine',nmax_fine) 
+    setattr(ncfile,'n_blocks_coarse_to_fine',nblocks) 
+    setattr(ncfile,'Green_Gamma_width',CS.Green_Gamma_width) 
     setattr(ncfile,'kernel_Gamma_width',CS.kernel_Gamma_width) 
     setattr(ncfile,'phonon_frequency',hw_ph) 
 
@@ -104,16 +100,6 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
     REPH   = ncfile.createVariable("Re_E_phonon",'d',('phonon_alpha_kappa',))
     IEPH   = ncfile.createVariable("Im_E_phonon",'d',('phonon_alpha_kappa',))
 
-    Re_R_smooth = ncfile.createVariable("Re_R_smooth",'d',('xy','L_AB'))
-    Im_R_smooth = ncfile.createVariable("Im_R_smooth",'d',('xy','L_AB'))
-    Re_I_smooth = ncfile.createVariable("Re_I_smooth",'d',('xy','L_AB'))
-    Im_I_smooth = ncfile.createVariable("Im_I_smooth",'d',('xy','L_AB'))
-
-    Re_R_singular = ncfile.createVariable("Re_R_singular",'d',('xy','L_AB'))
-    Im_R_singular = ncfile.createVariable("Im_R_singular",'d',('xy','L_AB'))
-    Re_I_singular = ncfile.createVariable("Re_I_singular",'d',('xy','L_AB'))
-    Im_I_singular = ncfile.createVariable("Im_I_singular",'d',('xy','L_AB'))
-
     Re_R = ncfile.createVariable("Re_R",'d',('xy','L_AB'))
     Im_R = ncfile.createVariable("Im_R",'d',('xy','L_AB'))
     Re_I = ncfile.createVariable("Re_I",'d',('xy','L_AB'))
@@ -123,23 +109,10 @@ def write_to_file(CS, nmax_coarse_smooth, nmax_fine_smooth, nblocks_smooth, \
     REPH[:] = N.real(CS.E_ph)
     IEPH[:] = N.imag(CS.E_ph)
 
-    Re_R_smooth[:,:] = N.real(CS.Rq_smooth)
-    Im_R_smooth[:,:] = N.imag(CS.Rq_smooth)
-    Re_I_smooth[:,:] = N.real(CS.Iq_smooth)
-    Im_I_smooth[:,:] = N.imag(CS.Iq_smooth)
-
-
-    Re_R_singular[:,:] = N.real(CS.Rq_singular)
-    Im_R_singular[:,:] = N.imag(CS.Rq_singular)
-    Re_I_singular[:,:] = N.real(CS.Iq_singular)
-    Im_I_singular[:,:] = N.imag(CS.Iq_singular)
-
-
     Re_R[:,:] = N.real(CS.Rq)
     Im_R[:,:] = N.imag(CS.Rq)
     Re_I[:,:] = N.real(CS.Iq)
     Im_I[:,:] = N.imag(CS.Iq)
-
 
     ncfile.close()
 
