@@ -1,1 +1,1 @@
-git archive master | bzip2 > HCF_6.tar.bz2
+git archive master | bzip2 > HCF_8.tar.bz2
