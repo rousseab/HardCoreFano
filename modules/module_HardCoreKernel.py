@@ -152,38 +152,7 @@ class ScatteringKernel:
 
         return
 
-    def get_LR_oneD(self,list_xi):
-        """
-        Compute the contribution coming from the real kernel
-        """
-
-        f = function_fermi_occupation(list_xi,0.,self.beta)
-
-        # Compute the symmetric kernel
-        KR = get_KR(list_xi+self.mu,self.kernel_Gamma_width)
-
-        LR = complex(1.,0.)*f*KR    
-
-        return LR
-
-    def get_LR_twoD(self,list_xi,list_eta_hw):
-        """
-        Compute the contribution coming from the real kernel
-        """
-
-        fermi_dirac  = function_fermi_occupation(list_xi,0.,self.beta)
-
-        u  = list_xi[:,N.newaxis] - list_eta_hw[N.newaxis,:] + self.mu
-        f  = fermi_dirac[:,N.newaxis]
-
-
-        KR = get_KR(u,self.kernel_Gamma_width)
-
-        LR = complex(1.,0.)*f*KR
-
-        return LR
-
-    def get_LI_oneD(self,list_xi):
+    def get_fKI_KK(self,list_xi):
         """
         Compute the contribution coming from the imaginary kernel
         """
@@ -191,36 +160,6 @@ class ScatteringKernel:
         # evaluate spline            
         u = N.real ( list_xi )
 
-        LI = complex(1.,0.)*spleval(self.splmake_tuple, u)
+        fKI_KK = complex(1.,0.)*spleval(self.splmake_tuple, u)
 
-        return LI
-
-    def get_LI_twoD(self,list_xi,list_eta_hw):
-        """
-        Compute the contribution coming from the imaginary kernel
-        """
-        # evaluate spline            
-        u = N.real ( list_xi[:,N.newaxis]  - list_eta_hw[N.newaxis,:] )
-
-        LI = complex(1.,0.)*spleval(self.splmake_tuple, u)
-
-        return LI
-
-    def get_L_oneD(self,list_xi):
-        """
-        Compute the full contribution to the scattering kernel
-        """
-
-        L = self.get_LR_oneD(list_xi)+self.get_LI_oneD(list_xi)
-
-        return L
-
-    def get_L_twoD(self,list_xi,list_eta_hw):
-        """
-        Compute the full contribution to the scattering kernel
-        """
-
-        L = self.get_LR_twoD(list_xi,list_eta_hw)+self.get_LI_twoD(list_xi,list_eta_hw)
-
-        return L
-
+        return fKI_KK 
