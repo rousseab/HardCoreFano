@@ -237,7 +237,7 @@ class IGridFunction:
 
             list_xi2 = list_epsilon2 - self.mu 
 
-            for eta in [-1.,1.]:
+            for eta in [-1,1]:
 
                 list_C1 = []
                 list_C3 = []
