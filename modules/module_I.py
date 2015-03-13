@@ -85,7 +85,7 @@ class IGridFunction:
 
         We have
 
-        I_{n}(k,k+q,w) = -sum_{eta} eta  C(xi_{n1 k},eta hbar omega)-C(xi_{n3 k+q},eta hbar omega)
+        I_{n}(k,k+q,w) =  sum_{eta} eta  C(xi_{n1 k},eta hbar omega)-C(xi_{n3 k+q},eta hbar omega)
                                          ---------------------------------------------------------
                                                         xi_{n1 k} - xi_{n3 k+q}
 
@@ -96,7 +96,6 @@ class IGridFunction:
         C = complex(0.,0.)*N.zeros_like(list_xi)
 
         # Build some ingredients which we'll use over and over.
-
         xi1  = 1.*list_xi
         xi2  = 1.*list_xi2
         xi2_minus_eta_hw = xi2-eta*self.hw
@@ -108,7 +107,6 @@ class IGridFunction:
         Fermi_2_minus_ehw= function_fermi_occupation(xi2_minus_eta_hw, 0., self.beta)
 
         KR_xi1          = get_KR(xi1+self.mu,self.kernel_Gamma_width)
-        KI_xi1          = get_KI(xi1+self.mu,self.kernel_Gamma_width)
 
         KR_xi2_minus_ehw= get_KR(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
         KI_xi2_minus_ehw= get_KI(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
@@ -119,91 +117,19 @@ class IGridFunction:
         # Add each term, one by one. This may not be efficient, but it must be transparent
 
         one_on_denominator = 1./(real_denominator  + 1j*eta*self.Green_Gamma_width)
-        numerator   = Fermi_2*( KR_xi2_minus_ehw + 1j*eta*KI_xi2_minus_ehw)-Fermi_1*KR_xi1
+        
+        numerator   = (Fermi_2_minus_ehw-Fermi_2) *  ( KR_xi2_minus_ehw + 1j*eta*KI_xi2_minus_ehw)
+
         C +=  numerator*one_on_denominator 
 
 
-        if eta == 1:
-            denominator = real_denominator + 1j*(eta+1.)*self.Green_Gamma_width 
-            one_on_denominator  = 1./denominator 
-        elif eta == -1:
-            one_on_denominator  = self.cutoff_denominator(real_denominator,eta*self.fadeeva_delta_width)
-        else:
-            print 'PROBLEM!'
-            sys.exit()
+        one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+        numerator   = Fermi_1*KR_xi1 - Fermi_2_minus_ehw*KR_xi2_minus_ehw + fKI_KK_xi1 - fKI_KK_xi2_minus_ehw 
 
-        numerator   = -0.5j*( Fermi_1*KI_xi1 + eta*Fermi_2_minus_ehw*KI_xi2_minus_ehw ) \
-                      -0.5 *(fKI_KK_xi1 - fKI_KK_xi2_minus_ehw )
         C +=  numerator*one_on_denominator 
 
-
-        if eta == 1:
-            one_on_denominator  = self.cutoff_denominator(real_denominator,eta*self.fadeeva_delta_width)
-        elif eta == -1:
-            denominator = real_denominator  +  1j*(eta-1.)*self.Green_Gamma_width 
-            one_on_denominator  = 1./denominator 
-        else:
-            print 'PROBLEM!'
-            sys.exit()
-
-        numerator   = -0.5j*(-Fermi_1*KI_xi1 + eta*Fermi_2_minus_ehw*KI_xi2_minus_ehw ) \
-                      -0.5 *(fKI_KK_xi1 - fKI_KK_xi2_minus_ehw )
-        C +=  numerator*one_on_denominator
-
         return C
 
-
-    def get_C_Vanishing_Gamma(self,list_xi, list_xi2, eta):
-        """
-        This routine computes the "C" function, in the limit where Gamma = 0, for testing purposes.
-
-        We have
-
-        I_{n}(k,k+q,w) = -sum_{eta} eta  C(xi_{n1 k},eta hbar omega)-C(xi_{n3 k+q},eta hbar omega)
-                                         ---------------------------------------------------------
-                                                        xi_{n1 k} - xi_{n3 k+q}
-
-        We'll assume that list_xi1 and list_xi2 have the same dimension [nk].
-        """
-
-        # Initialize C
-        C = complex(0.,0.)*N.zeros_like(list_xi)
-
-        # Build some ingredients which we'll use over and over.
-
-        xi1  = 1.*list_xi
-        xi2  = 1.*list_xi2
-        xi2_minus_eta_hw = xi2-eta*self.hw
-
-        real_denominator = xi1-xi2_minus_eta_hw 
-
-        Fermi_1          = function_fermi_occupation(xi1, 0., self.beta)
-        Fermi_2          = function_fermi_occupation(xi2, 0., self.beta)
-        Fermi_2_minus_ehw= function_fermi_occupation(xi2_minus_eta_hw, 0., self.beta)
-
-        KR_xi1          = get_KR(xi1+self.mu,self.kernel_Gamma_width)
-        KI_xi1          = get_KI(xi1+self.mu,self.kernel_Gamma_width)
-
-        KR_xi2_minus_ehw= get_KR(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
-        KI_xi2_minus_ehw= get_KI(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
-
-        fKI_KK_xi1           = self.SK.get_fKI_KK(xi1)
-        fKI_KK_xi2_minus_ehw = self.SK.get_fKI_KK(xi2_minus_eta_hw)
-
-        # Add each term, one by one. This may not be efficient, but it must be transparent
-
-        denominator = real_denominator  + 1j*eta*self.delta_width
-
-        """
-        numerator   = Fermi_2* KR_xi2_minus_ehw  - Fermi_1*KR_xi1 \
-                        +1j*eta*(Fermi_2-Fermi_2_minus_ehw)*KI_xi2_minus_ehw \
-                        -fKI_KK_xi1 + fKI_KK_xi2_minus_ehw 
-        """
-        numerator   = Fermi_2* KR_xi2_minus_ehw  - Fermi_1*KR_xi1
-
-        C +=  numerator/denominator
-
-        return C
 
     def cutoff_denominator(self,list_x,fadeeva_width):
         """
@@ -246,14 +172,12 @@ class IGridFunction:
                 for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
                     list_xi1 = list_epsilon1 - self.mu
                     C1       = self.get_C(list_xi1, list_xi2, eta)
-                    #C1       = self.get_C_Vanishing_Gamma(list_xi1, list_xi2, eta)
 
                     list_C1.append(C1)
 
                 for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
                     list_xi3 = list_epsilon3 - self.mu
                     C3       = self.get_C(list_xi3, list_xi2, eta)
-                    #C3       = self.get_C_Vanishing_Gamma(list_xi3, list_xi2, eta)
                     list_C3.append(C3)
 
 
@@ -272,7 +196,7 @@ class IGridFunction:
                         # cutoff the 1/0 
                         den13 = N.real(self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6))
 
-                        contribution = -eta*den13*(C1-C3) 
+                        contribution = eta*den13*(C1-C3) 
 
                         # add the "smooth" part to the I function
                         self.I[index,:] += self.conversion_factor*contribution
