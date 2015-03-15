@@ -76,7 +76,9 @@ def d_Fermi_dxi(eps_k,mu,beta):
     I_rest  = (z < zmax)*(z > zmin)
 
     df_dxi  = N.zeros_like(z)
-    df_dxi[I_rest] = -beta*N.exp(z[I_rest])/(1.+N.exp(z[I_rest]))**2
+    e       = N.exp(z[I_rest])
+
+    df_dxi[I_rest] = -beta*e/(1.+e)**2
 
     return complex(1.,0.)*df_dxi
 
