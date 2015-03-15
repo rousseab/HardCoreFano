@@ -162,7 +162,6 @@ class ScatteringKernel:
         self.splmake_tuple_dict['Re_dfKI'] = splmake(self.list_x, N.real(self.list_KK_dfKI), order = self.spline_order) 
         self.splmake_tuple_dict['Im_dfKI'] = splmake(self.list_x, N.imag(self.list_KK_dfKI), order = self.spline_order) 
 
-
         write_splmake(self.splmake_tuple_dict, self.spline_order, filename, self.mu, self.beta,\
                                             self.kernel_Gamma_width, self.Green_Gamma_width)
 
