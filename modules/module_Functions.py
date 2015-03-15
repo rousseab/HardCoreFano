@@ -65,3 +65,18 @@ def function_fermi_occupation(eps_k,mu,beta):
 
     return complex(1.,0.)*f_occ
 
+def d_Fermi_dxi(eps_k,mu,beta):
+
+    z   = beta*(eps_k- mu)
+
+    zmin =-28. # Exp[zmin] ~ 10^{-12}
+    zmax = 28. # Exp[zmax] ~ 10^12
+
+    I_big   = z >= zmax
+    I_rest  = (z < zmax)*(z > zmin)
+
+    df_dxi  = N.zeros_like(z)
+    f_occ[I_rest] = -beta*N.exp(z[I_rest])/(1.+N.exp(z[I_rest]))**2
+
+    return complex(1.,0.)*df_dxi
+
