@@ -69,9 +69,19 @@ class ScatteringKernel:
     """
     The Kramers-Kronig integral will be performed on a dense mesh, and a spline will be used
     to interpolate function to any desired value.
+
+    A finite width will be assumed for the Green function as well as for the scattering Kernel.
+    The integrals considered are
+
+    int d xi/(i pi) f(xi) KR(xi+mu)/(xi-(x+i Green_Gamma))
+    int d xi/(i pi) f(xi) KI(xi+mu)/(xi-(x+i Green_Gamma))
+
+    int d xi/(i pi) df(xi)/dxi KR(xi+mu)/(xi-(x+i Green_Gamma))
+    int d xi/(i pi) df(xi)/dxi KI(xi+mu)/(xi-(x+i Green_Gamma))
+
     """
 
-    def __init__(self,mu,beta, kernel_Gamma_width):
+    def __init__(self,mu,beta, kernel_Gamma_width,Green_Gamma_width):
         """
         Build the Kramers-Kronig integral
         """
@@ -85,6 +95,11 @@ class ScatteringKernel:
         # broadening, to avoid singularities in scattering kernel
         self.kernel_Gamma_width = kernel_Gamma_width
 
+        # Green function broadening, to account for lifetime effects
+        self.Green_Gamma_width = Green_Gamma_width
+
+
+
     def build_scattering_kernel(self):
         """
         Compute the scattering kernel using the KK relation.            
@@ -93,7 +108,8 @@ class ScatteringKernel:
         # Hardcode these parameters for now.
 
         # build a regular linear energy grid
-        n_u   = 4001
+        #n_u   = 4001
+        n_u   = 401
         u_max = 4.*D_cutoff
         u_min =-4.*D_cutoff
         d_u   = (u_max-u_min)/(n_u-1.)
@@ -101,23 +117,26 @@ class ScatteringKernel:
         list_u = u_min+d_u*iloop
 
         # Prepare the Kramers-Kronig object
-        KK = KramersKronig(list_u)
+        KK = KramersKronig_Gamma(list_u,self.Green_Gamma_width)
 
-        # Compute the anti-symmetric kernel
+        # Compute the  kernel
+        KR = get_KR(list_u+self.mu,self.kernel_Gamma_width)
         KI = get_KI(list_u+self.mu,self.kernel_Gamma_width)
 
         # Compute the Fermi occupation factor. Note that the chemical potential should NOT be
         # passed to this function 
-        f  = function_fermi_occupation(list_u,0.,self.beta)
+        f      = function_fermi_occupation(list_u,0.,self.beta)
+        df_dxi = d_Fermi_dxi(list_u,0.,self.beta)
 
-        # the integrand in the Kramers-Kronig integral
-        list_fKI = f*KI
+        # apply the Kramers-Kronig transformations 
+        self.list_KK_fKR  = KK.apply_kramers_kronig_FFT_convolution(f*KR)
+        self.list_KK_fKI  = KK.apply_kramers_kronig_FFT_convolution(f*KI)
+        self.list_KK_dfKR = KK.apply_kramers_kronig_FFT_convolution(df_dxi*KR)
+        self.list_KK_dfKI = KK.apply_kramers_kronig_FFT_convolution(df_dxi*KI)
 
-        # apply the Kramers-Kronig transformation to the anti-symmetric kernel
-        self.list_KK_fKI = N.real(1j*KK.apply_kramers_kronig_FFT_convolution(list_fKI))
         self.list_x    = list_u
 
-    def build_and_write_spline_parameters(self,filename):
+    def build_and_write_spline_parameters(self,filename,spline_order=3):
         """
         Building the parameters for a spline is quite time consuming. It is best to 
         do this once, write to file, and be done with it.
@@ -126,36 +145,55 @@ class ScatteringKernel:
         appropriate arrays.
         """
 
-        # prepare the splne
-        self.splmake_tuple = splmake(self.list_x, self.list_KK_fKI )
-        write_splmake(self.splmake_tuple,filename,self.mu,self.beta,self.kernel_Gamma_width)
+        # prepare the spline
+        self.splmake_tuple_dict = {}
+
+        self.splmake_tuple_dict['Re_fKR']  = splmake(self.list_x, N.real(self.list_KK_fKR), order = spline_order)
+        self.splmake_tuple_dict['Im_fKR']  = splmake(self.list_x, N.imag(self.list_KK_fKR), order = spline_order)
+
+        self.splmake_tuple_dict['Re_dfKR'] = splmake(self.list_x, N.real(self.list_KK_dfKR), order = spline_order) 
+        self.splmake_tuple_dict['Im_dfKR'] = splmake(self.list_x, N.imag(self.list_KK_dfKR), order = spline_order)
+
+        self.splmake_tuple_dict['Re_fKI']  = splmake(self.list_x, N.real(self.list_KK_fKI), order = spline_order) 
+        self.splmake_tuple_dict['Im_fKI']  = splmake(self.list_x, N.imag(self.list_KK_fKI), order = spline_order) 
+
+        self.splmake_tuple_dict['Re_dfKI'] = splmake(self.list_x, N.real(self.list_KK_dfKI), order = spline_order) 
+        self.splmake_tuple_dict['Im_dfKI'] = splmake(self.list_x, N.imag(self.list_KK_dfKI), order = spline_order) 
+
+
+        write_splmake(self.splmake_tuple_dict, spline_order, filename,self.mu,self.beta,\
+                                            self.kernel_Gamma_width, self.Green_Gamma_width)
 
     def read_spline_parameters(self,filename):
         """
         Read in the spline parameters, which must have been generated previously.
         """
 
-        # prepare the splne
-        self.splmake_tuple, file_mu, file_beta, file_kernel_Gamma_width = read_splmake(filename)
+        # prepare the spline
+        self.splmake_tuple_dict, file_mu, file_beta, \
+        file_kernel_Gamma_width, file_Green_Gamma_width  = read_splmake(filename)
 
         tol = 1e-8
         if N.abs(file_mu   - self.mu) > tol or \
             N.abs(file_beta - self.beta) > tol or \
-              N.abs(file_kernel_Gamma_width - self.kernel_Gamma_width) > tol:
+              N.abs(file_Green_Gamma_width - self.Green_Gamma_width) > tol or \
+                N.abs(file_kernel_Gamma_width - self.kernel_Gamma_width) > tol:
             print 'ERROR: the splmake_tuple file contains parameters inconsistent with this calculation'
             print 'EXITING NOW'
             sys.exit()
 
         return
 
-    def get_fKI_KK(self,list_xi):
+    def get_integral_KK(self,term_name, list_xi, sign_Gamma):
         """
-        Compute the contribution coming from the imaginary kernel
+        Compute the contribution coming from the imaginary kernel.
         """
 
         # evaluate spline            
         u = N.real ( list_xi )
 
-        fKI_KK = complex(1.,0.)*spleval(self.splmake_tuple, u)
+        f_KK = \
+                sign_Gamma*complex(1.,0.)*spleval(self.splmake_tuple_dict['Re_%s'%term_name],u)+\
+                           complex(0.,1.)*spleval(self.splmake_tuple_dict['Im_%s'%term_name],u)
 
-        return fKI_KK 
+        return f_KK 
