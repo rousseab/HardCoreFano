@@ -49,7 +49,7 @@ class IGridFunction:
         self.beta= beta
 
         # Create the scattering kernel object
-        self.SK = ScatteringKernel(self.mu,self.beta,self.kernel_Gamma_width)
+        self.SK = ScatteringKernel(self.mu,self.beta,self.kernel_Gamma_width,self.Green_Gamma_width)
 
         # let's assume a default filename; read in the needed parameters
         filename ='scattering_spline.nc'
@@ -98,33 +98,73 @@ class IGridFunction:
         # Build some ingredients which we'll use over and over.
         xi1  = 1.*list_xi
         xi2  = 1.*list_xi2
-        xi2_minus_eta_hw = xi2-eta*self.hw
 
-        real_denominator = xi1-xi2+eta*self.hw
+        KK_fKR_xi1  = self.SK.get_integral_KK('fKR', xi1, sign_Gamma= -eta)
+        KK_fKI_xi1  = self.SK.get_integral_KK('fKI', xi1, sign_Gamma= -eta)
 
-        Fermi_1          = function_fermi_occupation(xi1, 0., self.beta)
-        Fermi_2          = function_fermi_occupation(xi2, 0., self.beta)
-        Fermi_2_minus_ehw= function_fermi_occupation(xi2_minus_eta_hw, 0., self.beta)
+        KK_dfKR_xi1  = self.SK.get_integral_KK('dfKR', xi1, sign_Gamma= -eta)
+        KK_dfKI_xi1  = self.SK.get_integral_KK('dfKI', xi1, sign_Gamma= -eta)
 
-        KR_xi1          = get_KR(xi1+self.mu,self.kernel_Gamma_width)
-
-        KR_xi2_minus_ehw= get_KR(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
-        KI_xi2_minus_ehw= get_KI(xi2_minus_eta_hw+self.mu,self.kernel_Gamma_width)
-
-        fKI_KK_xi1           = self.SK.get_fKI_KK(xi1)
-        fKI_KK_xi2_minus_ehw = self.SK.get_fKI_KK(xi2_minus_eta_hw)
 
         # Add each term, one by one. This may not be efficient, but it must be transparent
 
-        one_on_denominator = 1./(real_denominator  + 1j*eta*self.Green_Gamma_width)
-        
-        numerator   = (Fermi_2_minus_ehw-Fermi_2) *  ( KR_xi2_minus_ehw + 1j*eta*KI_xi2_minus_ehw)
+        #============
+        # First term
+        #============
+
+        real_denominator = x1-x2-eta*self.hw
+        if eta == -1:
+            one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+        else:
+            one_on_denominator = 1./(real_denominator- 1j*(eta+1.)*self.Green_Gamma_width)
+
+        KK_dfKR_xi2  = self.SK.get_integral_KK('dfKR', xi2+eta*self.hw, sign_Gamma= 1.)
+        KK_dfKI_xi2  = self.SK.get_integral_KK('dfKI', xi2+eta*self.hw, sign_Gamma= 1.)
+
+
+        numerator = 0.5*self.hw* ( KK_dfKR_xi1 - KK_dfKR_xi2 -1j*eta*KK_dfKI_xi1 +1j*eta*KK_dfKI_xi2)
 
         C +=  numerator*one_on_denominator 
 
+        #============
+        # Second term
+        #============
+        real_denominator = x1-x2-eta*self.hw
+        if eta ==  1:
+            one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+        else:
+            one_on_denominator = 1./(real_denominator- 1j*(eta-1.)*self.Green_Gamma_width)
 
-        one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
-        numerator   = Fermi_1*KR_xi1 - Fermi_2_minus_ehw*KR_xi2_minus_ehw + fKI_KK_xi1 - fKI_KK_xi2_minus_ehw 
+        KK_dfKR_xi2  = self.SK.get_integral_KK('dfKR', xi2+eta*self.hw, sign_Gamma=-1.)
+        KK_dfKI_xi2  = self.SK.get_integral_KK('dfKI', xi2+eta*self.hw, sign_Gamma=-1.)
+
+        numerator = -0.5*self.hw* ( KK_dfKR_xi1 - KK_dfKR_xi2 -1j*eta*KK_dfKI_xi1 +1j*eta*KK_dfKI_xi2)
+
+        C +=  numerator*one_on_denominator 
+
+        #============
+        # Third term
+        #============
+        real_denominator   = x1-x2-self.hw
+        one_on_denominator = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+
+        KK_fKR_xi2  = self.SK.get_integral_KK('fKR', xi2+self.hw, sign_Gamma=-eta)
+        KK_fKI_xi2  = self.SK.get_integral_KK('fKI', xi2+self.hw, sign_Gamma=-eta)
+
+        numerator = 0.5* ( KK_fKR_xi1 - KK_fKR_xi2 -1j*eta*KK_fKI_xi1 +1j*eta*KK_fKI_xi2)
+
+        C +=  numerator*one_on_denominator 
+
+        #============
+        # Fourth term
+        #============
+        real_denominator   = x1-x2+self.hw
+        one_on_denominator = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+
+        KK_fKR_xi2  = self.SK.get_integral_KK('fKR', xi2-self.hw, sign_Gamma=-eta)
+        KK_fKI_xi2  = self.SK.get_integral_KK('fKI', xi2-self.hw, sign_Gamma=-eta)
+
+        numerator =-0.5* ( KK_fKR_xi1 - KK_fKR_xi2 -1j*eta*KK_fKI_xi1 +1j*eta*KK_fKI_xi2)
 
         C +=  numerator*one_on_denominator 
 
