@@ -11,7 +11,7 @@ from module_Constants import *
 
 from Scientific.IO.NetCDF import NetCDFFile as Dataset
 
-def write_splmake(splmake_tuple_dict,spline_order, filename,mu,kernel_Gamma_width, Green_Gamma_width):
+def write_splmake(splmake_tuple_dict, spline_order, filename, mu, beta, kernel_Gamma_width, Green_Gamma_width):
     """
     Write the spline parameters to a netcdf file
     """
@@ -65,7 +65,7 @@ def read_splmake(filename):
     file_kernel_Gamma_width = ncfile.kernel_Gamma_width
     file_Green_Gamma_width  = ncfile.Green_Gamma_width
 
-    spline_order = ncfile.spline_order
+    spline_order = ncfile.spline_order[0]
 
     list_keys = ['Re_fKR', 'Im_fKR', 'Re_dfKR', 'Im_dfKR', 'Re_fKI', 'Im_fKI', 'Re_dfKI', 'Im_dfKI']
 

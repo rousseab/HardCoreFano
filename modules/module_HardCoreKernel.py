@@ -98,6 +98,8 @@ class ScatteringKernel:
         # Green function broadening, to account for lifetime effects
         self.Green_Gamma_width = Green_Gamma_width
 
+        # let's hardcode this parameter for now
+        self.spline_order = 3
 
 
     def build_scattering_kernel(self):
@@ -108,8 +110,8 @@ class ScatteringKernel:
         # Hardcode these parameters for now.
 
         # build a regular linear energy grid
-        #n_u   = 4001
-        n_u   = 401
+        n_u   = 4001
+        #n_u   = 401
         u_max = 4.*D_cutoff
         u_min =-4.*D_cutoff
         d_u   = (u_max-u_min)/(n_u-1.)
@@ -136,7 +138,7 @@ class ScatteringKernel:
 
         self.list_x    = list_u
 
-    def build_and_write_spline_parameters(self,filename,spline_order=3):
+    def build_and_write_spline_parameters(self,filename):
         """
         Building the parameters for a spline is quite time consuming. It is best to 
         do this once, write to file, and be done with it.
@@ -148,20 +150,20 @@ class ScatteringKernel:
         # prepare the spline
         self.splmake_tuple_dict = {}
 
-        self.splmake_tuple_dict['Re_fKR']  = splmake(self.list_x, N.real(self.list_KK_fKR), order = spline_order)
-        self.splmake_tuple_dict['Im_fKR']  = splmake(self.list_x, N.imag(self.list_KK_fKR), order = spline_order)
+        self.splmake_tuple_dict['Re_fKR']  = splmake(self.list_x, N.real(self.list_KK_fKR), order = self.spline_order)
+        self.splmake_tuple_dict['Im_fKR']  = splmake(self.list_x, N.imag(self.list_KK_fKR), order = self.spline_order)
 
-        self.splmake_tuple_dict['Re_dfKR'] = splmake(self.list_x, N.real(self.list_KK_dfKR), order = spline_order) 
-        self.splmake_tuple_dict['Im_dfKR'] = splmake(self.list_x, N.imag(self.list_KK_dfKR), order = spline_order)
+        self.splmake_tuple_dict['Re_dfKR'] = splmake(self.list_x, N.real(self.list_KK_dfKR), order = self.spline_order) 
+        self.splmake_tuple_dict['Im_dfKR'] = splmake(self.list_x, N.imag(self.list_KK_dfKR), order = self.spline_order)
 
-        self.splmake_tuple_dict['Re_fKI']  = splmake(self.list_x, N.real(self.list_KK_fKI), order = spline_order) 
-        self.splmake_tuple_dict['Im_fKI']  = splmake(self.list_x, N.imag(self.list_KK_fKI), order = spline_order) 
+        self.splmake_tuple_dict['Re_fKI']  = splmake(self.list_x, N.real(self.list_KK_fKI), order = self.spline_order) 
+        self.splmake_tuple_dict['Im_fKI']  = splmake(self.list_x, N.imag(self.list_KK_fKI), order = self.spline_order) 
 
-        self.splmake_tuple_dict['Re_dfKI'] = splmake(self.list_x, N.real(self.list_KK_dfKI), order = spline_order) 
-        self.splmake_tuple_dict['Im_dfKI'] = splmake(self.list_x, N.imag(self.list_KK_dfKI), order = spline_order) 
+        self.splmake_tuple_dict['Re_dfKI'] = splmake(self.list_x, N.real(self.list_KK_dfKI), order = self.spline_order) 
+        self.splmake_tuple_dict['Im_dfKI'] = splmake(self.list_x, N.imag(self.list_KK_dfKI), order = self.spline_order) 
 
 
-        write_splmake(self.splmake_tuple_dict, spline_order, filename,self.mu,self.beta,\
+        write_splmake(self.splmake_tuple_dict, self.spline_order, filename, self.mu, self.beta,\
                                             self.kernel_Gamma_width, self.Green_Gamma_width)
 
     def read_spline_parameters(self,filename):
