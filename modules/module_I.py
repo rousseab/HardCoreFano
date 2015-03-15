@@ -112,7 +112,7 @@ class IGridFunction:
         # First term
         #============
 
-        real_denominator = x1-x2-eta*self.hw
+        real_denominator = xi1-xi2-eta*self.hw
         if eta == -1:
             one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
         else:
@@ -129,7 +129,7 @@ class IGridFunction:
         #============
         # Second term
         #============
-        real_denominator = x1-x2-eta*self.hw
+        real_denominator = xi1-xi2-eta*self.hw
         if eta ==  1:
             one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
         else:
@@ -145,7 +145,7 @@ class IGridFunction:
         #============
         # Third term
         #============
-        real_denominator   = x1-x2-self.hw
+        real_denominator   = xi1-xi2-self.hw
         one_on_denominator = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
 
         KK_fKR_xi2  = self.SK.get_integral_KK('fKR', xi2+self.hw, sign_Gamma=-eta)
@@ -158,7 +158,7 @@ class IGridFunction:
         #============
         # Fourth term
         #============
-        real_denominator   = x1-x2+self.hw
+        real_denominator   = xi1-xi2+self.hw
         one_on_denominator = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
 
         KK_fKR_xi2  = self.SK.get_integral_KK('fKR', xi2-self.hw, sign_Gamma=-eta)
