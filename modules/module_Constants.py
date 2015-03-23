@@ -81,6 +81,8 @@ nimp_a02 = impurity_density*density
 me_M     = electron_mass/carbon_mass
 
 # Values fitted from the literature
-u_a0    = (2.80 + 3.47)/2. # eV; average value from GW results of Mauri et al.
+u_a0_Gamma =  2.80
+u_a0_K     =  3.47
+u_a0    = ( u_a0_Gamma + u_a0_K)/2. # eV; average value from GW results of Mauri et al.
 v_a0    = 0.0   # eV
 
