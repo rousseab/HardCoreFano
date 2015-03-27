@@ -18,11 +18,11 @@ def getDubayForceConstants():
     hostname = socket.gethostname()
 
     if 'ferron' in hostname:
-        datafile = open('/Users/Shared/Bruno/work/projects/Graphene_Fano/python_work/HardCoreKernelFano/modules/force_constants.txt')
+        datafile = open('/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_9.0/modules/force_constants.txt')
     elif 'briaree' in hostname:
         datafile = open('/RQusagers/roussea4/python_depository/HCF_5.0/modules/force_constants.txt')
     else: 
-        datafile = open('/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_5.0/modules/force_constants.txt')
+        datafile = open('/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_9.0/modules/force_constants.txt')
 
     DubayForceConstants_cartesian = {}
     DubayForceConstants_radial    = {}
