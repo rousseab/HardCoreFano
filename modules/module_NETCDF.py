@@ -132,4 +132,5 @@ def write_to_file(CS, nmax_coarse, nmax_fine, nblocks, hw_ph,filename):
 
     ncfile.close()
 
+    return
 
