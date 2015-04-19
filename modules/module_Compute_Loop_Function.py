@@ -71,8 +71,8 @@ class Compute_Loop_Function:
             # Compute matrix elements
             Mq = MGridFunction(q_vector=self.q,E_phonon_polarization=self.E_ph,hw_nu_q=self.hw_ph,wedge=wedge)
 
-            # Compute the I function, which contains frequency dependence
-            Iq = IGridFunction(q_vector = self.q, hw = self.hw_ph, \
+            # Compute the J function, which contains frequency dependence
+            Jq = JGridFunction(q_vector = self.q, hw = self.hw_ph, \
                                Green_Gamma_width  = self.Green_Gamma_width, \
                                kernel_Gamma_width = self.kernel_Gamma_width, \
                                mu = self.mu, beta = self.beta,  wedge = wedge)
@@ -81,10 +81,10 @@ class Compute_Loop_Function:
                 for n2 in [0,1]:
                     for n3 in [0,1]:
 
-                        I_key = (n1,n2,n3)
-                        I_index = Iq.index_dictionary[I_key]
+                        J_key = (n1,n2,n3)
+                        J_index = Jq.index_dictionary[J_key]
                         # dimensions [nk]
-                        IElements = Iq.I[I_index,:]
+                        JElements = Jq.J[J_index,:]
 
                         for i_alpha, alpha in zip([0,1],['x','y']):
                             for i_L, L in zip([0,1],['A','B']):
@@ -99,8 +99,8 @@ class Compute_Loop_Function:
 
                                 MatrixElements_u_star = N.conjugate(MatrixElements_u)
 
-                                MI      = MatrixElements_u*IElements 
-                                M_starI = MatrixElements_u_star*IElements 
+                                MJ      = MatrixElements_u*JElements 
+                                M_starJ = MatrixElements_u_star*JElements 
 
                                 # We use a trick to extract R and I
                                 #
@@ -117,8 +117,8 @@ class Compute_Loop_Function:
 
                                 # The AreaIntegrator routine expects an array with shape [nk,nw].
                                 # To leverage existing code, we artificially give MI a new dimension.
-                                Hq_plus  =  self.normalization*AreaIntegrator(wedge,MI[:,N.newaxis] )[0] # only take one frequency
-                                Hq_minus = -self.normalization*AreaIntegrator(wedge,M_starI[:,N.newaxis])[0]
+                                Hq_plus  =  self.normalization*AreaIntegrator(wedge,MJ[:,N.newaxis] )[0] # only take one frequency
+                                Hq_minus = -self.normalization*AreaIntegrator(wedge,M_starJ[:,N.newaxis])[0]
 
                                 self.Rq[i_alpha,i_L] +=  0.5   *( Hq_plus -   N.conjugate(Hq_minus) )
                                 self.Iq[i_alpha,i_L] += -0.5*1j*( Hq_plus +   N.conjugate(Hq_minus) )
