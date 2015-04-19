@@ -79,96 +79,74 @@ class JGridFunction:
                     key = (n1,n2,n3)
                     self.index_dictionary[key] = index
 
-    def get_C(self,list_xi, list_xi2, eta):
+    def get_D(self,list_xi, list_xi2):
         """
-        This routine computes the "C" function, which is fairly complicated to reproduce here.
+        This routine computes the "D" function, which is fairly complicated to reproduce here.
 
         We have
 
-        J_{n}(k,k+q,w) =  sum_{eta} eta  C(xi_{n1 k},eta hbar omega)-C(xi_{n3 k+q},eta hbar omega)
+        J_{n}(k,k+q,w) =                 D(xi_{n1 k},eta hbar omega)-D(xi_{n3 k+q}, hbar omega)
                                          ---------------------------------------------------------
                                                         xi_{n1 k} - xi_{n3 k+q}
 
-        We'll assume that list_xi1 and list_xi2 have the same dimension [nk].
+        We'll assume that list_xi  and list_xi2 have the same dimension [nk].
+
+        The equations implemented here are obtained in my document computing_J.pdf .
         """
 
-        # Initialize C
-        C = complex(0.,0.)*N.zeros_like(list_xi)
+        # Initialize D
+        D = complex(0.,0.)*N.zeros_like(list_xi)
 
         # Build some ingredients which we'll use over and over.
         xi1  = 1.*list_xi
         xi2  = 1.*list_xi2
 
-        KK_fKR_xi1  = self.SK.get_integral_KK('fKR', xi1, sign_Gamma= -eta)
-        KK_fKI_xi1  = self.SK.get_integral_KK('fKI', xi1, sign_Gamma= -eta)
 
-        KK_dfKR_xi1  = self.SK.get_integral_KK('dfKR', xi1, sign_Gamma= -eta)
-        KK_dfKI_xi1  = self.SK.get_integral_KK('dfKI', xi1, sign_Gamma= -eta)
+        for eta in [-1,1]:
 
+            KK_fKR_xi1  = self.SK.get_integral_KK('fKR', xi1, sign_Gamma= eta)
+            KK_fKI_xi1  = self.SK.get_integral_KK('fKI', xi1, sign_Gamma= eta)
 
-        # Add each term, one by one. This may not be efficient, but it must be transparent
-
-        #============
-        # First term
-        #============
-
-        real_denominator = xi1-xi2-eta*self.hw
-        if eta == -1:
-            one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
-        else:
-            one_on_denominator = 1./(real_denominator- 1j*(eta+1.)*self.Green_Gamma_width)
-
-        KK_dfKR_xi2  = self.SK.get_integral_KK('dfKR', xi2+eta*self.hw, sign_Gamma= 1.)
-        KK_dfKI_xi2  = self.SK.get_integral_KK('dfKI', xi2+eta*self.hw, sign_Gamma= 1.)
+            KK_dfKR_xi1  = self.SK.get_integral_KK('dfKR', xi1, sign_Gamma= eta)
+            KK_dfKI_xi1  = self.SK.get_integral_KK('dfKI', xi1, sign_Gamma= eta)
 
 
-        numerator = 0.5*self.hw* ( KK_dfKR_xi1 - KK_dfKR_xi2 -1j*eta*KK_dfKI_xi1 +1j*eta*KK_dfKI_xi2)
+            for phi in [-1,1]:
 
-        C +=  numerator*one_on_denominator 
+                #============
+                # First term
+                #============
 
-        #============
-        # Second term
-        #============
-        real_denominator = xi1-xi2-eta*self.hw
-        if eta ==  1:
-            one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
-        else:
-            one_on_denominator = 1./(real_denominator- 1j*(eta-1.)*self.Green_Gamma_width)
+                real_denominator    = xi1-xi2+phi*self.hw
+                one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
 
-        KK_dfKR_xi2  = self.SK.get_integral_KK('dfKR', xi2+eta*self.hw, sign_Gamma=-1.)
-        KK_dfKI_xi2  = self.SK.get_integral_KK('dfKI', xi2+eta*self.hw, sign_Gamma=-1.)
+                prefactor = 0.5*complex(1.,0.)*phi*one_on_denominator  
 
-        numerator = -0.5*self.hw* ( KK_dfKR_xi1 - KK_dfKR_xi2 -1j*eta*KK_dfKI_xi1 +1j*eta*KK_dfKI_xi2)
 
-        C +=  numerator*one_on_denominator 
+                D += prefactor* ( eta*KK_fKR_xi1   \
+                                 -eta*self.SK.get_integral_KK('fKR', xi2-phi*self.hw, sign_Gamma= eta) \
+                                 +1j*KK_fKI_xi1 \
+                                 -1j*self.SK.get_integral_KK('fKI', xi2-phi*self.hw, sign_Gamma= eta) )
 
-        #============
-        # Third term
-        #============
-        real_denominator   = xi1-xi2-self.hw
-        one_on_denominator = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+                #============
+                # second term
+                #============
 
-        KK_fKR_xi2  = self.SK.get_integral_KK('fKR', xi2+self.hw, sign_Gamma=-eta)
-        KK_fKI_xi2  = self.SK.get_integral_KK('fKI', xi2+self.hw, sign_Gamma=-eta)
+                real_denominator    = xi1-xi2+eta*self.hw
+                if eta == phi:
+                    one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+                else:
+                    one_on_denominator = 1./(real_denominator + 1j*(eta-phi)*self.Green_Gamma_width)
 
-        numerator = 0.5* ( KK_fKR_xi1 - KK_fKR_xi2 -1j*eta*KK_fKI_xi1 +1j*eta*KK_fKI_xi2)
+                prefactor = 0.5*complex(1.,0.)*phi*self.hw*one_on_denominator  
 
-        C +=  numerator*one_on_denominator 
+                D += prefactor* ( KK_dfKR_xi1   \
+                                 -self.SK.get_integral_KK('dfKR', xi2-eta*self.hw, sign_Gamma= phi) \
+                                 +1j*eta*KK_dfKI_xi1 \
+                                 -1j*eta*self.SK.get_integral_KK('dfKI', xi2-eta*self.hw, sign_Gamma= phi) )
 
-        #============
-        # Fourth term
-        #============
-        real_denominator   = xi1-xi2+self.hw
-        one_on_denominator = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
 
-        KK_fKR_xi2  = self.SK.get_integral_KK('fKR', xi2-self.hw, sign_Gamma=-eta)
-        KK_fKI_xi2  = self.SK.get_integral_KK('fKI', xi2-self.hw, sign_Gamma=-eta)
-
-        numerator =-0.5* ( KK_fKR_xi1 - KK_fKR_xi2 -1j*eta*KK_fKI_xi1 +1j*eta*KK_fKI_xi2)
-
-        C +=  numerator*one_on_denominator 
-
-        return C
+        return D
 
 
     def cutoff_denominator(self,list_x,fadeeva_width):
@@ -203,43 +181,40 @@ class JGridFunction:
 
             list_xi2 = list_epsilon2 - self.mu 
 
-            for eta in [-1,1]:
+            list_D1 = []
+            list_D3 = []
 
-                list_C1 = []
-                list_C3 = []
+            # Compute the C functions
+            for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
+                list_xi1 = list_epsilon1 - self.mu
+                D1       = self.get_D(list_xi1, list_xi2)
 
-                # Compute the C functions
-                for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
-                    list_xi1 = list_epsilon1 - self.mu
-                    C1       = self.get_C(list_xi1, list_xi2, eta)
+                list_D1.append(D1)
 
-                    list_C1.append(C1)
-
-                for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
-                    list_xi3 = list_epsilon3 - self.mu
-                    C3       = self.get_C(list_xi3, list_xi2, eta)
-                    list_C3.append(C3)
+            for n3, list_epsilon3 in zip([0,1],list_epsilon_kq):
+                list_xi3 = list_epsilon3 - self.mu
+                D3       = self.get_D(list_xi3, list_xi2)
+                list_D3.append(D3)
 
 
-                for n1, list_epsilon1, C1 in zip([0,1],list_epsilon_k, list_C1):
+            for n1, list_epsilon1, D1 in zip([0,1],list_epsilon_k, list_D1):
 
-                    list_xi1 = list_epsilon1 - self.mu 
+                list_xi1 = list_epsilon1 - self.mu 
 
-                    for n3, list_epsilon3, C3 in zip([0,1],list_epsilon_kq,list_C3):
+                for n3, list_epsilon3, D3 in zip([0,1],list_epsilon_kq,list_D3):
 
-                        list_xi3 =  list_epsilon3 - self.mu
+                    list_xi3 =  list_epsilon3 - self.mu
 
+                    key   = (n1,n2,n3)
+                    index = self.index_dictionary[key]
 
-                        key   = (n1,n2,n3)
-                        index = self.index_dictionary[key]
+                    # cutoff the 1/0 
+                    den13 = N.real(self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6))
 
-                        # cutoff the 1/0 
-                        den13 = N.real(self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6))
+                    contribution = den13*(D1-D3) 
 
-                        contribution = eta*den13*(C1-C3) 
-
-                        # add the "smooth" part to the J function
-                        self.J[index,:] += self.conversion_factor*contribution
+                    # add the "smooth" part to the J function
+                    self.J[index,:] += self.conversion_factor*contribution
 
         return 
 
