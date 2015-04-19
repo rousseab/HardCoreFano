@@ -1,10 +1,10 @@
 #================================================================================
 #
-#           Module I
+#           Module J
 #           ===============
 #
 #       This module implements an object which represents the frequency 
-#       dependent term I_{i, {n}} (k, k+q, w).
+#       dependent term J_{ {n}} (k, k+q, w).
 #
 #================================================================================
 
@@ -16,17 +16,17 @@ from module_HardCoreKernel  import *
 import scipy.special as SS
 
 
-class IGridFunction:
+class JGridFunction:
     """
-    Class which builds and contains the I_{{n}}(k,k+q,w) object, which
+    Class which builds and contains the J_{{n}}(k,k+q,w) object, which
     is the result of summing on all the G functions in the loop function.
 
     All the band energies will be assumed to be in eV, and the gamma 
-    functions are in eV x a0^2. The units of I are
+    functions are in eV x a0^2. The units of J are
     
-        [ I ] ~ Length^2/ Energy
+        [ J ] ~ Length^2/ Energy
 
-    As computed, we'll have [ I ] ~ a0^2/eV. To convert to a0^2/Ha (atomic units),
+    As computed, we'll have [ J ] ~ a0^2/eV. To convert to a0^2/Ha (atomic units),
     we must multipy by conversion factor = Ha_to_eV
     """
 
@@ -60,12 +60,12 @@ class IGridFunction:
         self.nk   = len(wedge.list_k)
         self.dim  = len(self.index_dictionary)
 
-        # I will be in units of [Length]^2 / [Enegy].
+        # J will be in units of [Length]^2 / [Enegy].
         # where all terms are in fundamental units
 
-        self.I    = complex(0.,0.)*N.zeros([self.dim,self.nk])
+        self.J    = complex(0.,0.)*N.zeros([self.dim,self.nk])
 
-        self.build_I(wedge)
+        self.build_J(wedge)
 
     def build_indices(self):
 
@@ -85,7 +85,7 @@ class IGridFunction:
 
         We have
 
-        I_{n}(k,k+q,w) =  sum_{eta} eta  C(xi_{n1 k},eta hbar omega)-C(xi_{n3 k+q},eta hbar omega)
+        J_{n}(k,k+q,w) =  sum_{eta} eta  C(xi_{n1 k},eta hbar omega)-C(xi_{n3 k+q},eta hbar omega)
                                          ---------------------------------------------------------
                                                         xi_{n1 k} - xi_{n3 k+q}
 
@@ -182,7 +182,7 @@ class IGridFunction:
         return den
 
 
-    def build_I(self,wedge):
+    def build_J(self,wedge):
         """
         All quantities are built here. It will be *crucial* to make
         this code as transparent as possible, to avoid making mistakes!
@@ -238,8 +238,8 @@ class IGridFunction:
 
                         contribution = eta*den13*(C1-C3) 
 
-                        # add the "smooth" part to the I function
-                        self.I[index,:] += self.conversion_factor*contribution
+                        # add the "smooth" part to the J function
+                        self.J[index,:] += self.conversion_factor*contribution
 
         return 
 
