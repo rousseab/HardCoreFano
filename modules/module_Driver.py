@@ -54,9 +54,9 @@ import module_HardCoreKernel
 reload(module_HardCoreKernel)
 from module_HardCoreKernel import *
 
-import module_I
-reload(module_I)
-from module_I              import *
+import module_J
+reload(module_J)
+from module_J              import *
 
 import module_Tests
 reload(module_Tests)
