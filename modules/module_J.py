@@ -85,9 +85,9 @@ class JGridFunction:
 
         We have
 
-        J_{n}(k,k+q,w) =                 D(xi_{n1 k},eta hbar omega)-D(xi_{n3 k+q}, hbar omega)
-                                         ---------------------------------------------------------
-                                                        xi_{n1 k} - xi_{n3 k+q}
+        J_{n}(k,k+q,w) =  D(xi_{n1 k},eta hbar omega)-D(xi_{n3 k+q}, hbar omega)
+                          ---------------------------------------------------------
+                                           xi_{n1 k} - xi_{n3 k+q}
 
         We'll assume that list_xi  and list_xi2 have the same dimension [nk].
 
