@@ -48,6 +48,10 @@ def get_gamma(list_z):
 
     return gamma
 
+def get_KR_inf(list_energies):
+    KR_inf  =  -complex(1.,0.)*2.*N.pi*hvF**2/D_cutoff**2*list_energies
+
+    return KR_inf
 
 def get_KR(list_energies,kernel_Gamma_width):
 
@@ -67,23 +71,25 @@ def get_KI(list_energies,kernel_Gamma_width):
 
 class ScatteringKernel:
     """
-    The Kramers-Kronig integral will be performed on a dense mesh, and a spline will be used
-    to interpolate function to any desired value.
+    This oject computes and stores  generalized Kramers-Kronig integrals, as well as the
+    the necessary technology to interpolate to arbitrary values of the arguments.
 
     A finite width will be assumed for the Green function as well as for the scattering Kernel.
+
     The integrals considered are
 
-    int d xi/(i pi) f(xi) KR(xi+mu)/(xi-(x+i Green_Gamma))
-    int d xi/(i pi) f(xi) KI(xi+mu)/(xi-(x+i Green_Gamma))
+    SR(x, kappa) = int d xi/(i pi) f(xi) KR(xi+mu)/(xi-(x+i kappa Green_Gamma))
+    SI(x, kappa) = int d xi/(i pi) f(xi) KI(xi+mu)/(xi-(x+i kappa Green_Gamma))
 
-    int d xi/(i pi) df(xi)/dxi KR(xi+mu)/(xi-(x+i Green_Gamma))
-    int d xi/(i pi) df(xi)/dxi KI(xi+mu)/(xi-(x+i Green_Gamma))
+    TR(x, kappa, eta hw) = int d xi/(i pi) ( f(xi) - f(xi+eta hw) ) KR(xi+mu)/(xi-(x+i kappa Green_Gamma))
+    TI(x, kappa, eta hw) = int d xi/(i pi) ( f(xi) - f(xi+eta hw) ) KI(xi+mu)/(xi-(x+i kappa Green_Gamma))
 
     """
 
-    def __init__(self,mu,beta, kernel_Gamma_width,Green_Gamma_width):
+    def __init__(self,mu,beta, kernel_Gamma_width, Green_Gamma_width, spline_order = 3):
         """
-        Build the Kramers-Kronig integral
+        Prepare the basics for this object. It can be invoked to read or write the
+        integrals.        
         """
 
         # chemical potential
@@ -98,45 +104,66 @@ class ScatteringKernel:
         # Green function broadening, to account for lifetime effects
         self.Green_Gamma_width = Green_Gamma_width
 
-        # let's hardcode this parameter for now
-        self.spline_order = 3
+        self.spline_order = spline_order 
 
 
-    def build_scattering_kernel(self):
+    def build_scattering_kernel_integrals(self, list_hw_ext, n_xi_grid = 4001):
         """
-        Compute the scattering kernel using the KK relation.            
+        Compute the various integrals
         """
-
-        # Hardcode these parameters for now.
+        # External frequencies at which TA must be computed
+        self.list_hw_ext =  list_hw_ext 
+        self.list_eta    =  [-1,1]
 
         # build a regular linear energy grid
-        n_u   = 4001
-        #n_u   = 401
-        u_max = 4.*D_cutoff
-        u_min =-4.*D_cutoff
-        d_u   = (u_max-u_min)/(n_u-1.)
-        iloop  = N.arange(n_u)
-        list_u = u_min+d_u*iloop
+        self.n_xi_grid   =  n_xi_grid 
+
+        xi_max = 4.*D_cutoff
+        xi_min =-4.*D_cutoff
+        d_xi   = (xi_max-xi_min)/(self.n_xi_grid-1.)
+        iloop  = N.arange(self.n_xi_grid)
+
+        self.list_xi = xi_min+d_xi*iloop
 
         # Prepare the Kramers-Kronig object
-        KK = KramersKronig_Gamma(list_u,self.Green_Gamma_width)
+        KK = KramersKronig_Gamma(self.list_xi,self.Green_Gamma_width)
 
-        # Compute the  kernel
-        KR = get_KR(list_u+self.mu,self.kernel_Gamma_width)
-        KI = get_KI(list_u+self.mu,self.kernel_Gamma_width)
+
+        # Compute the  kernels
+        KR = get_KR(self.list_xi+self.mu,self.kernel_Gamma_width)
+        KI = get_KI(self.list_xi+self.mu,self.kernel_Gamma_width)
 
         # Compute the Fermi occupation factor. Note that the chemical potential should NOT be
         # passed to this function 
-        f      = function_fermi_occupation(list_u,0.,self.beta)
-        df_dxi = d_Fermi_dxi(list_u,0.,self.beta)
+        f = function_fermi_occupation(self.list_xi,0.,self.beta)
 
         # apply the Kramers-Kronig transformations 
-        self.list_KK_fKR  = KK.apply_kramers_kronig_FFT_convolution(f*KR)
-        self.list_KK_fKI  = KK.apply_kramers_kronig_FFT_convolution(f*KI)
-        self.list_KK_dfKR = KK.apply_kramers_kronig_FFT_convolution(df_dxi*KR)
-        self.list_KK_dfKI = KK.apply_kramers_kronig_FFT_convolution(df_dxi*KI)
+        print ' ====   Computing SR and SI ====='
+        self.list_SR  = KK.apply_kramers_kronig_FFT_convolution(f*KR)
+        self.list_SI  = KK.apply_kramers_kronig_FFT_convolution(f*KI)
 
-        self.list_x    = list_u
+
+        # Initialize arrays with dimensions [ eta, hw, n_xi_grid]
+        # Arrays are C ordered by default, so last index loops fastest.
+        self.list_TR = complex(0.,0.)*N.zeros([2,len(self.list_hw_ext),self.n_xi_grid])
+        self.list_TI = complex(0.,0.)*N.zeros([2,len(self.list_hw_ext),self.n_xi_grid])
+
+        # Bite the bullet, do this fairly heavy computation!
+        for i_eta, eta in enumerate(self.list_eta):
+            for i_hw_ext, hw_ext in enumerate( self.list_hw_ext ):
+        
+                print ' ====   Computing TR and TI, eta = %i,  hw_ext = %4.3f meV ====='%(i_eta,1000*hw_ext)
+                # Compute the Fermi occupation factor, shifted by frequency
+                # 
+                f_ehw = function_fermi_occupation(self.list_xi+eta*hw_ext,0.,self.beta)
+
+                df = f-f_ehw
+
+                self.list_TR[i_eta,i_hw_ext,:] = KK.apply_kramers_kronig_FFT_convolution(df*KR)
+                self.list_TI[i_eta,i_hw_ext,:] = KK.apply_kramers_kronig_FFT_convolution(df*KI)
+
+        return
+
 
     def build_and_write_spline_parameters(self,filename):
         """
