@@ -1,9 +1,6 @@
-Graphene-IR-Spectrum V8
-=======================
+Graphene-IR-Spectrum V10
+=========================
 
-In this version, lifetimes are introduced in the Green functions, in an approximate
-way, before doing the analytical continuation.
-
-The goal of the project is to compute the contribution to the optical conductivity of 
-disordered graphene of the Feynman diagram presented in the paper. 
+This version tries to correct what seems to be a bug in version 9.0,
+which did not reproduce J(q,w) well.
 
