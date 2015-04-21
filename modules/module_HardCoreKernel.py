@@ -53,11 +53,35 @@ def get_KR_inf(list_energies):
 
     return KR_inf
 
+
 def get_KR(list_energies,kernel_Gamma_width):
 
     KR = complex(1.,0.)*N.real( get_gamma(list_energies+1j*kernel_Gamma_width)) 
 
     return KR
+
+
+def get_SR_inf(list_xi,mu,Green_Gamma_width):
+    """
+    This function returns the effective contribution coming from the 
+    linear term in the KR kernel. The integral over this linear part is 
+    formally divergent, but the divergence can be regularized. We are
+    left with the following contribution.
+
+    See document "computing_J.pdf" for details.
+    """
+
+    prefactor =  -complex(1.,0.)*2.*N.pi*hvF**2/D_cutoff**2
+    
+    Term_1 = N.log(1.+list_xi**2/Green_Gamma_width**2)
+
+    Term_2 = 1j*N.pi-2.*1j*N.arctan(list_xi/Green_Gamma_width)
+
+    energy_factor =  list_xi+mu+1j*Green_Gamma_width
+
+    SR_inf  =  prefactor/(2.*N.pi*1j)* energy_factor *(Term_1+ Term_2)
+
+    return SR_inf
 
 def get_KI(list_energies,kernel_Gamma_width):
 
@@ -67,7 +91,6 @@ def get_KI(list_energies,kernel_Gamma_width):
     KI = -complex(1.,0.)*N.imag( get_gamma(list_energies+1j*kernel_Gamma_width)) - limit
 
     return KI
-
 
 class ScatteringKernel:
     """
@@ -225,3 +248,5 @@ class ScatteringKernel:
                            complex(0.,1.)*spleval(self.splmake_tuple_dict['Im_%s'%term_name],u)
 
         return f_KK 
+
+
