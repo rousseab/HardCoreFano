@@ -11,7 +11,10 @@ from module_Constants import *
 
 from Scientific.IO.NetCDF import NetCDFFile as Dataset
 
-def write_splmake(splmake_tuple_dict, spline_order, filename, mu, beta, kernel_Gamma_width, Green_Gamma_width):
+def write_splmake(      re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline,
+                        re_TR_spline, im_TR_spline, re_TI_spline, im_TI_spline,
+                        filename, spline_order, list_hw_ext, mu, 
+                        beta, kernel_Gamma_width, Green_Gamma_width)
     """
     Write the spline parameters to a netcdf file
     """
@@ -29,22 +32,41 @@ def write_splmake(splmake_tuple_dict, spline_order, filename, mu, beta, kernel_G
     setattr(ncfile,'spline_order',spline_order) 
 
     # --- Create dimensions ----
-    splmake_tuple = splmake_tuple_dict['Re_fKR']
-    d1 = splmake_tuple[0].shape[0]
-    d2 = splmake_tuple[1].shape[0]
+    dim_spline = len(re_SR_spline)
+    dim_hw_ext = len(list_hw_ext)
+    dim_eta    = 2
 
-    ncfile.createDimension("d1",d1)
-    ncfile.createDimension("d2",d2)
- 
+    ncfile.createDimension("dim_eta",dim_eta)
+    ncfile.createDimension("dim_hw_ext",dim_hw_ext)
+    ncfile.createDimension("dim_spline",len(list_hw_ext))
+
     # Create variables
-    for key in splmake_tuple_dict:
-        splmake_tuple = splmake_tuple_dict[key]
+    HW = ncfile.createVariable("list_hw_ext",'d',('dim_hw_ext',))
+    HW[:] = list_hw_ext
 
-        D1 = ncfile.createVariable("%s_array1"%key,'d',('d1',))
-        D2 = ncfile.createVariable("%s_array2"%key,'d',('d2',))
+    RE_SR = ncfile.createVariable("re_SR_spline",'d',('dim_spline',))
+    RE_SR[:] =  re_SR_spline 
 
-        D1[:] = N.real(splmake_tuple[0])
-        D2[:] = N.real(splmake_tuple[1])
+    IM_SR = ncfile.createVariable("im_SR_spline",'d',('dim_spline',))
+    IM_SR[:] =  im_SR_spline 
+
+    RE_SI = ncfile.createVariable("re_SI_spline",'d',('dim_spline',))
+    RE_SI[:] =  re_SI_spline 
+
+    IM_SI = ncfile.createVariable("im_SI_spline",'d',('dim_spline',))
+    IM_SI[:] =  im_SI_spline 
+
+    RE_TR = ncfile.createVariable("re_TR_spline",'d',('dim_eta','dim_hw_ext','dim_spline',))
+    RE_TR[:] =  re_TR_spline 
+
+    IM_TR = ncfile.createVariable("im_TR_spline",'d',('dim_eta','dim_hw_ext','dim_spline',))
+    IM_TR[:] =  im_TR_spline 
+
+    RE_TI = ncfile.createVariable("re_TI_spline",'d',('dim_eta','dim_hw_ext','dim_spline',))
+    RE_TI[:] =  re_TI_spline 
+
+    IM_TI = ncfile.createVariable("im_TI_spline",'d',('dim_eta','dim_hw_ext','dim_spline',))
+    IM_TI[:] =  im_TI_spline 
 
     ncfile.close()
 
