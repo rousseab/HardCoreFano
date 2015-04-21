@@ -159,7 +159,7 @@ class ScatteringKernel:
         """
         # External frequencies at which TA must be computed
         self.list_hw_ext =  list_hw_ext 
-        self.list_eta    =  [-1,1]
+        self.list_eta    =  N.array([-1,1])
 
         # build a regular linear energy grid
         self.n_xi_grid   =  n_xi_grid 
@@ -176,7 +176,6 @@ class ScatteringKernel:
 
         # Prepare the Kramers-Kronig object
         KK = KramersKronig_Gamma(self.list_xi,self.Green_Gamma_width)
-
 
         # Compute the  kernels
         KR = get_KR(self.list_xi+self.mu,self.kernel_Gamma_width)
@@ -241,23 +240,47 @@ class ScatteringKernel:
         appropriate arrays.
         """
 
-        # prepare the spline
-        self.splmake_tuple_dict = {}
+        # generate the splines
 
-        self.splmake_tuple_dict['Re_fKR']  = splmake(self.list_x, N.real(self.list_KK_fKR), order = self.spline_order)
-        self.splmake_tuple_dict['Im_fKR']  = splmake(self.list_x, N.imag(self.list_KK_fKR), order = self.spline_order)
+        # The function splmake has inteface:
+        #
+        #           (xk, Ck, order)  = splmake(xk, yk, order)   
+        #
+        # There is no point in storing "xk" and "order" as part of the output tuple. 
+        # Spleval will need this information in the form of a tuple, which we can re-build
+        #  at evalation time.
 
-        self.splmake_tuple_dict['Re_dfKR'] = splmake(self.list_x, N.real(self.list_KK_dfKR), order = self.spline_order) 
-        self.splmake_tuple_dict['Im_dfKR'] = splmake(self.list_x, N.imag(self.list_KK_dfKR), order = self.spline_order)
+        print ' ====   Computing spline of SR ====='
+        list_xi, re_SR_spline, order = splmake(self.list_xi, N.real(self.SR), order = self.spline_order)
+        list_xi, im_SR_spline, order = splmake(self.list_xi, N.imag(self.SR), order = self.spline_order)
 
-        self.splmake_tuple_dict['Re_fKI']  = splmake(self.list_x, N.real(self.list_KK_fKI), order = self.spline_order) 
-        self.splmake_tuple_dict['Im_fKI']  = splmake(self.list_x, N.imag(self.list_KK_fKI), order = self.spline_order) 
+        print ' ====   Computing spline of SI ====='
+        list_xi, re_SI_spline, order = splmake(self.list_xi, N.real(self.SI), order = self.spline_order)
+        list_xi, im_SI_spline, order = splmake(self.list_xi, N.imag(self.SI), order = self.spline_order)
 
-        self.splmake_tuple_dict['Re_dfKI'] = splmake(self.list_x, N.real(self.list_KK_dfKI), order = self.spline_order) 
-        self.splmake_tuple_dict['Im_dfKI'] = splmake(self.list_x, N.imag(self.list_KK_dfKI), order = self.spline_order) 
+        # same length for all splines
+        spline_length = len(im_SI_spline)
 
-        write_splmake(self.splmake_tuple_dict, self.spline_order, filename, self.mu, self.beta,\
-                                            self.kernel_Gamma_width, self.Green_Gamma_width)
+
+        re_TR_spline = N.zeros([2,len(self.list_hw_ext),spline_length ])
+        im_TR_spline = N.zeros([2,len(self.list_hw_ext),spline_length ])
+        re_TI_spline = N.zeros([2,len(self.list_hw_ext),spline_length ])
+        im_TI_spline = N.zeros([2,len(self.list_hw_ext),spline_length ])
+
+        for i_eta, eta in enumerate(self.list_eta):
+            for i_hw_ext, hw_ext in enumerate( self.list_hw_ext):
+                print ' ====   Computing spline for TR and TI, eta = %i,  hw_ext = %4.3f meV ====='%(eta,1000*hw_ext)
+
+                list_xi, re_TR_spline[i_eta,i_hw_ext,:], order = splmake(self.list_xi, N.real(self.TR[i_eta,i_hw_ext,:]), order = self.spline_order)
+                list_xi, im_TR_spline[i_eta,i_hw_ext,:], order = splmake(self.list_xi, N.imag(self.TR[i_eta,i_hw_ext,:]), order = self.spline_order)
+
+                list_xi, re_TI_spline[i_eta,i_hw_ext,:], order = splmake(self.list_xi, N.real(self.TI[i_eta,i_hw_ext,:]), order = self.spline_order)
+                list_xi, im_TI_spline[i_eta,i_hw_ext,:], order = splmake(self.list_xi, N.imag(self.TI[i_eta,i_hw_ext,:]), order = self.spline_order)
+
+        write_splmake(  re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline,
+                        re_TR_spline, im_TR_spline, re_TI_spline, im_TI_spline,
+                        filename, self.spline_order, self.list_xi, self.list_hw_ext, 
+                        self.mu, self.beta, self.kernel_Gamma_width, self.Green_Gamma_width)
 
     def read_spline_parameters(self,filename):
         """
@@ -265,15 +288,21 @@ class ScatteringKernel:
         """
 
         # prepare the spline
-        self.splmake_tuple_dict, file_mu, file_beta, \
-        file_kernel_Gamma_width, file_Green_Gamma_width  = read_splmake(filename)
+        self.re_SR_spline, self.im_SR_spline, self.re_SI_spline, self.im_SI_spline,
+        self.re_TR_spline, self.im_TR_spline, self.re_TI_spline, self.im_TI_spline,
+        self.list_xi, self.list_hw_ext, file_mu, file_beta, 
+        file_kernel_Gamma_width, file_Green_Gamma_width, file_spline_order = read_splmake(filename)
 
         tol = 1e-8
-        if N.abs(file_mu   - self.mu) > tol or \
-            N.abs(file_beta - self.beta) > tol or \
-              N.abs(file_Green_Gamma_width - self.Green_Gamma_width) > tol or \
-                N.abs(file_kernel_Gamma_width - self.kernel_Gamma_width) > tol:
-            print 'ERROR: the splmake_tuple file contains parameters inconsistent with this calculation'
+
+        test_mu    = N.abs(file_mu   - self.mu) > tol
+        test_beta  = N.abs(file_beta - self.beta) > tol 
+        test_Green = N.abs(file_Green_Gamma_width - self.Green_Gamma_width)> tol
+        test_kernel= N.abs(file_kernel_Gamma_width - self.kernel_Gamma_width) > tol
+        test_order = N.abs(file_spline_order - self.spline_order) > tol
+
+        if  test_mu or test_beta or test_Green or test_kernel or test_order: 
+            print 'ERROR: the splmake file contains parameters inconsistent with this calculation'
             print 'EXITING NOW'
             sys.exit()
 
