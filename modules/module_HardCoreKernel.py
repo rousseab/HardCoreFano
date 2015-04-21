@@ -288,9 +288,9 @@ class ScatteringKernel:
         """
 
         # prepare the spline
-        self.re_SR_spline, self.im_SR_spline, self.re_SI_spline, self.im_SI_spline,
-        self.re_TR_spline, self.im_TR_spline, self.re_TI_spline, self.im_TI_spline,
-        self.list_xi, self.list_hw_ext, file_mu, file_beta, 
+        self.re_SR_spline, self.im_SR_spline, self.re_SI_spline, self.im_SI_spline,\
+        self.re_TR_spline, self.im_TR_spline, self.re_TI_spline, self.im_TI_spline,\
+        self.list_xi, self.list_hw_ext, file_mu, file_beta, \
         file_kernel_Gamma_width, file_Green_Gamma_width, file_spline_order = read_splmake(filename)
 
         tol = 1e-8
@@ -307,6 +307,36 @@ class ScatteringKernel:
             sys.exit()
 
         return
+
+    def get_spline_SR(self, list_epsilon, sign_Gamma):
+        """
+        Compute the interpolated value for SR, using splines, which we assume are already computed.
+        """
+        # evaluate spline            
+        u = N.real ( list_epsilon )
+
+        re_tuple = (self.list_xi, self.re_SR_spline, self.spline_order)
+        im_tuple = (self.list_xi, self.im_SR_spline, self.spline_order)
+
+        S_R = sign_Gamma*complex(1.,0.)*spleval(re_tuple,u)+ complex(0.,1.)*spleval(im_tuple,u)
+
+        return S_R
+
+    def get_spline_SI(self, list_epsilon, sign_Gamma):
+        """
+        Compute the interpolated value for SR, using splines, which we assume are already computed.
+        """
+        # evaluate spline            
+        u = N.real ( list_epsilon )
+
+        re_tuple = (self.list_xi, self.re_SI_spline, self.spline_order)
+        im_tuple = (self.list_xi, self.im_SI_spline, self.spline_order)
+
+        S_I = sign_Gamma*complex(1.,0.)*spleval(re_tuple,u)+ complex(0.,1.)*spleval(im_tuple,u)
+
+        return S_I
+
+
 
     def get_integral_KK(self,term_name, list_xi, sign_Gamma):
         """
