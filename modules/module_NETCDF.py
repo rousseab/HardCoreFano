@@ -11,10 +11,10 @@ from module_Constants import *
 
 from Scientific.IO.NetCDF import NetCDFFile as Dataset
 
-def write_splmake(      re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline,
-                        re_TR_spline, im_TR_spline, re_TI_spline, im_TI_spline,
-                        filename, spline_order, list_hw_ext, mu, 
-                        beta, kernel_Gamma_width, Green_Gamma_width)
+def write_splmake(      re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline, 
+                        re_TR_spline, im_TR_spline, re_TI_spline, im_TI_spline, 
+                        filename, spline_order, list_xi, list_hw_ext, mu, 
+                        beta, kernel_Gamma_width, Green_Gamma_width):
     """
     Write the spline parameters to a netcdf file
     """
@@ -35,12 +35,17 @@ def write_splmake(      re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline,
     dim_spline = len(re_SR_spline)
     dim_hw_ext = len(list_hw_ext)
     dim_eta    = 2
+    dim_xi     = len(list_xi)
 
     ncfile.createDimension("dim_eta",dim_eta)
     ncfile.createDimension("dim_hw_ext",dim_hw_ext)
-    ncfile.createDimension("dim_spline",len(list_hw_ext))
+    ncfile.createDimension("dim_xi",dim_xi)
+    ncfile.createDimension("dim_spline",dim_spline)
 
     # Create variables
+    XI = ncfile.createVariable("list_xi",'d',('dim_xi',))
+    XI[:] = list_xi
+
     HW = ncfile.createVariable("list_hw_ext",'d',('dim_hw_ext',))
     HW[:] = list_hw_ext
 
@@ -81,27 +86,32 @@ def read_splmake(filename):
     #--------------------------------------------
     ncfile   = Dataset(filename,'r')
 
-    file_mu     = ncfile.mu
-    file_beta   = ncfile.beta
+    file_mu     = ncfile.mu[0]
+    file_beta   = ncfile.beta[0]
+    file_kernel_Gamma_width = ncfile.kernel_Gamma_width[0]
+    file_Green_Gamma_width  = ncfile.Green_Gamma_width[0]
+    file_spline_order = ncfile.spline_order[0]
+    
+    file_list_hw_ext = ncfile.variables["list_hw_ext"][:]
+    file_list_xi     = ncfile.variables["list_xi"][:]
 
-    file_kernel_Gamma_width = ncfile.kernel_Gamma_width
-    file_Green_Gamma_width  = ncfile.Green_Gamma_width
+    re_SR_spline = ncfile.variables['re_SR_spline'][:] 
+    im_SR_spline = ncfile.variables['im_SR_spline'][:] 
 
-    spline_order = ncfile.spline_order[0]
+    re_SI_spline = ncfile.variables['re_SI_spline'][:] 
+    im_SI_spline = ncfile.variables['im_SI_spline'][:] 
 
-    list_keys = ['Re_fKR', 'Im_fKR', 'Re_dfKR', 'Im_dfKR', 'Re_fKI', 'Im_fKI', 'Re_dfKI', 'Im_dfKI']
+    re_TR_spline = ncfile.variables['re_TR_spline'][:] 
+    im_TR_spline = ncfile.variables['im_TR_spline'][:] 
 
-    splmake_tuple_dict = {}
+    re_TI_spline = ncfile.variables['re_TI_spline'][:] 
+    im_TI_spline = ncfile.variables['im_TI_spline'][:] 
 
-    for key in list_keys:
-        D1 = ncfile.variables['%s_array1'%key][:]
-        D2 = ncfile.variables['%s_array2'%key][:]
+    return  re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline,
+            re_TR_spline, im_TR_spline, re_TI_spline, im_TI_spline,
+            file_list_xi, file_list_hw_ext, file_mu, file_beta, 
+            file_kernel_Gamma_width, file_Green_Gamma_width, file_spline_order   
 
-        splmake_tuple = (D1,D2,spline_order)
-
-        splmake_tuple_dict[key] = splmake_tuple 
-
-    return splmake_tuple_dict, file_mu, file_beta, file_kernel_Gamma_width, file_Green_Gamma_width  
 
 def write_to_file(CS, nmax_coarse, nmax_fine, nblocks, hw_ph,filename):
 
