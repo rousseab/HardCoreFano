@@ -41,9 +41,11 @@ class JGridFunction:
         self.Green_Gamma_width  = Green_Gamma_width
         self.kernel_Gamma_width = kernel_Gamma_width
 
-        # Whenever the imaginary part in the denominator vanishes,
+        # Whenever a denominator vanishes, we'll take a numerical
+        # derivative of the function considred
         #  we'll use a Fadeeva broadening instead of a lorentzian broadening.
-        self.fadeeva_delta_width = 0.025 # eV, to avoid divergences
+        self.singularity_delta = 1e-4   # eV
+        self.singularity_tol   = 1e-12  # eV
 
         self.mu  = mu
         self.beta= beta
@@ -116,9 +118,14 @@ class JGridFunction:
                 #============
                 # First term
                 #============
+                denominator    = complex(1.,0.)*( list_epsilon-(list_xi2+phi*self.hw) )
 
-                real_denominator    = list_epsilon-(list_xi2+phi*self.hw)
-                one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
+                # identify singular points
+                ind_s = N.where( N.abs(denominator) < self.singularity_tol)
+
+                denominator[ind_s] = denominator[ind_s] +1j # no harm done, just avoiding NaN
+
+                one_on_denominator  = complex(1.,0.)/denominator
 
 
                 S_R_xi2_phw = self.SK.get_spline_SR(list_xi2+phi*self.hw, sign_Gamma = eta)
@@ -126,26 +133,66 @@ class JGridFunction:
     
                 numerator   = S_R_epsilon -  S_R_xi2_phw  + 1j*eta* (S_I_epsilon- S_I_xi2_phw) 
 
-                D += prefactor*numerator*one_on_denominator
+                contribution = prefactor*numerator*one_on_denominator
+
+                # Correct for singular points
+
+                S_R_epsilon_singular = S_R_epsilon[ind_s] 
+                S_I_epsilon_singular = S_I_epsilon[ind_s] 
+
+                S_R_xi2_phw_singular = self.SK.get_spline_SR( list_xi2[ind_s] + phi*self.hw - self.singularity_delta, sign_Gamma = eta)
+                S_I_xi2_phw_singular = self.SK.get_spline_SI( list_xi2[ind_s] + phi*self.hw - self.singularity_delta, sign_Gamma = eta)
+
+                singular_numerator   = S_R_epsilon_singular -  S_R_xi2_phw_singular  \
+                                        + 1j*eta* (S_I_epsilon_singular- S_I_xi2_phw_singular) 
+
+                singular_contribution = prefactor*singular_numerator*/self.singularity_delta
+
+                contribution[ind_s] = singular_contribution 
+
+                D += contribution
+
 
                 #============
                 # second term
                 #============
 
-                real_denominator    = list_epsilon-(list_xi2-eta*self.hw)
-
-                if eta == phi:
-                    one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
-                else:
-                    one_on_denominator = 1./(real_denominator + 1j*(eta-phi)*self.Green_Gamma_width)
+                real_denominator = complex(1.,0.)*( list_epsilon-(list_xi2-eta*self.hw) )
 
                 T_R_xi2_ehw = self.SK.get_spline_TR(list_xi2-eta*self.hw, eta, self.hw, sign_Gamma = phi)
                 T_I_xi2_ehw = self.SK.get_spline_TI(list_xi2-eta*self.hw, eta, self.hw, sign_Gamma = phi)
     
                 numerator   = T_R_epsilon -  T_R_xi2_ehw  + 1j*eta* (T_I_epsilon- T_I_xi2_ehw) 
 
-                D += prefactor*numerator*one_on_denominator
+                if eta == phi:
+                    # identify singular points
+                    ind_s = N.where( N.abs(real_denominator) < self.singularity_tol)
 
+                    denominator[ind_s] = denominator[ind_s] +1j # no harm done, just avoiding NaN
+                    one_on_denominator  = complex(1.,0.)/denominator
+
+                    contribution = prefactor*numerator*one_on_denominator
+
+                    # handle singularities 
+                    T_R_epsilon_singular = T_R_epsilon[ind_s] 
+                    T_I_epsilon_singular = T_I_epsilon[ind_s]
+
+                    T_R_xi2_ehw_singular = self.SK.get_spline_TR(list_xi2[ind_s]-eta*self.hw - self.singularity_delta, eta, self.hw, sign_Gamma = phi)
+                    T_I_xi2_ehw_singular = self.SK.get_spline_TI(list_xi2[ind_s]-eta*self.hw - self.singularity_delta, eta, self.hw, sign_Gamma = phi)
+        
+                    singular_numerator   = T_R_epsilon_singular -  T_R_xi2_ehw_singular  \
+                                                + 1j*eta* (T_I_epsilon_singular - T_I_xi2_ehw_singular) 
+
+                    singular_contribution = prefactor*singular_numerator*/self.singularity_delta
+
+                    contribution[ind_s] = singular_contribution 
+
+                else:
+                    one_on_denominator = 1./(real_denominator + 1j*(eta-phi)*self.Green_Gamma_width)
+                    contribution = prefactor*numerator*one_on_denominator
+
+
+                D += contribution
 
         return D
 
