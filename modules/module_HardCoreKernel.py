@@ -336,20 +336,105 @@ class ScatteringKernel:
 
         return S_I
 
+    def get_i_eta_index(eta):
+        if eta == -1.:
+            i_eta = 0
+        elif eta == 1.:
+            i_eta = 1
+        else:
+            # fail hard!
+            print '#================================================================================'
+            print '#    ERROR! Cannot get i_eta if eta != -1 nad eta != 1                          ='
+            print '#================================================================================'
+            sys.exit()
+
+        return i_eta
 
 
-    def get_integral_KK(self,term_name, list_xi, sign_Gamma):
+    def get_hw_indices_and_interpolation(hw):
         """
-        Compute the contribution coming from the imaginary kernel.
+        This routine finds the indices of the closest
+        tabulated values in the list_hw_ext array.
+        It then computes the linear cofficients necessary for interpolation.
+         
+        This is a dangerous routine; if hw is outside the scope of list_hw_ext,            
+        bad things will happen! Testing for this here will be numerically costly...
         """
+
+        i_hw_1 = N.where(hw < SK.list_hw_ext)[0][0]  # below
+        i_hw_2 = N.where(hw > SK.list_hw_ext)[0][-1] # above
+
+        if i_hw_1 == i_hw_2:
+            #  a grid point has been selected
+            alpha_1 = 1.
+            alpha_2 = 0.
+        else:
+            hw_1 = SK.list_hw_ext[i_hw_min]
+            hw_2 = SK.list_hw_ext[i_hw_max]
+
+            alpha_1 = (hw_2-hw)/(hw_2-hw_1)
+            alpha_2 = (hw-hw_1)/(hw_2-hw_1)
+
+        return i_hw_1, i_hw_2, alpha_1,alpha_2
+
+    def get_spline_TR(self, list_epsilon, eta, hw, sign_Gamma):
+        """
+        Compute the interpolated value for TR, using splines, which we assume are already computed.
+        """
+
+        # find the index of eta
+        i_eta = get_i_eta_index(eta)
+
+        # find the indices of closest frequencies in table
+        # as well as interpolation coefficients
+
+        i_hw_1, i_hw_2, alpha_1, alpha_2 = get_hw_indices_and_interpolation(hw)
 
         # evaluate spline            
-        u = N.real ( list_xi )
+        u = N.real ( list_epsilon )
 
-        f_KK = \
-                sign_Gamma*complex(1.,0.)*spleval(self.splmake_tuple_dict['Re_%s'%term_name],u)+\
-                           complex(0.,1.)*spleval(self.splmake_tuple_dict['Im_%s'%term_name],u)
+        re_tuple_1 = (self.list_xi, self.re_TR_spline[i_eta,i_hw_1,:], self.spline_order)
+        im_tuple_1 = (self.list_xi, self.im_TR_spline[i_eta,i_hw_1,:], self.spline_order)
 
-        return f_KK 
+        T_R_1 = sign_Gamma*complex(1.,0.)*spleval(re_tuple_1,u)+ complex(0.,1.)*spleval(im_tuple_1,u)
 
+        re_tuple_2 = (self.list_xi, self.re_TR_spline[i_eta,i_hw_2,:], self.spline_order)
+        im_tuple_2 = (self.list_xi, self.im_TR_spline[i_eta,i_hw_2,:], self.spline_order)
+
+        T_R_2 = sign_Gamma*complex(1.,0.)*spleval(re_tuple_2,u)+ complex(0.,1.)*spleval(im_tuple_2,u)
+
+        T_R = alpha_1*T_R_1+alpha_2*T_R_2
+
+        return T_R
+
+
+    def get_spline_TI(self, list_epsilon, eta, hw, sign_Gamma):
+        """
+        Compute the interpolated value for TR, using splines, which we assume are already computed.
+        """
+
+        # find the index of eta
+        i_eta = get_i_eta_index(eta)
+
+        # find the indices of closest frequencies in table
+        # as well as interpolation coefficients
+
+        i_hw_1, i_hw_2, alpha_1, alpha_2 = get_hw_indices_and_interpolation(hw)
+
+        # evaluate spline            
+        u = N.real ( list_epsilon )
+
+        re_tuple_1 = (self.list_xi, self.re_TI_spline[i_eta,i_hw_1,:], self.spline_order)
+        im_tuple_1 = (self.list_xi, self.im_TI_spline[i_eta,i_hw_1,:], self.spline_order)
+
+        T_I_1 = sign_Gamma*complex(1.,0.)*spleval(re_tuple_1,u)+ complex(0.,1.)*spleval(im_tuple_1,u)
+
+        re_tuple_2 = (self.list_xi, self.re_TI_spline[i_eta,i_hw_2,:], self.spline_order)
+        im_tuple_2 = (self.list_xi, self.im_TI_spline[i_eta,i_hw_2,:], self.spline_order)
+
+        T_I_2 = sign_Gamma*complex(1.,0.)*spleval(re_tuple_2,u)+ complex(0.,1.)*spleval(im_tuple_2,u)
+
+        T_I = alpha_1*T_I_1+alpha_2*T_I_2
+
+        return T_I
 
