@@ -129,7 +129,6 @@ class ScatteringKernel:
 
         self.spline_order = spline_order 
 
-
     def build_scattering_kernel_integrals(self, list_hw_ext, n_xi_grid = 4001):
         """
         Compute the various integrals
@@ -156,15 +155,26 @@ class ScatteringKernel:
         KR = get_KR(self.list_xi+self.mu,self.kernel_Gamma_width)
         KI = get_KI(self.list_xi+self.mu,self.kernel_Gamma_width)
 
+        KR_inf = get_KR_inf(self.list_xi+self.mu)
+
         # Compute the Fermi occupation factor. Note that the chemical potential should NOT be
         # passed to this function 
         f = function_fermi_occupation(self.list_xi,0.,self.beta)
 
+        # Compute the Heaviside plateau function.
+        Theta = Heaviside_plateau(self.list_xi)
+
+
         # apply the Kramers-Kronig transformations 
         print ' ====   Computing SR and SI ====='
-        self.list_SR  = KK.apply_kramers_kronig_FFT_convolution(f*KR)
         self.list_SI  = KK.apply_kramers_kronig_FFT_convolution(f*KI)
 
+        # Compute SR in multiple steps, to avoid singular kernel
+        SR_1 = KK.apply_kramers_kronig_FFT_convolution(f*(KR-KR_inf))
+        SR_2 = KK.apply_kramers_kronig_FFT_convolution((f-Theta)*KR_inf)
+        SR_inf = get_SR_inf(self.list_xi,self.mu,self.Green_Gamma_width)
+
+        self.list_SR  = SR_1+SR_2+SR_inf 
 
         # Initialize arrays with dimensions [ eta, hw, n_xi_grid]
         # Arrays are C ordered by default, so last index loops fastest.
@@ -186,7 +196,6 @@ class ScatteringKernel:
                 self.list_TI[i_eta,i_hw_ext,:] = KK.apply_kramers_kronig_FFT_convolution(df*KI)
 
         return
-
 
     def build_and_write_spline_parameters(self,filename):
         """
