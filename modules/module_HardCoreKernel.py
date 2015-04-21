@@ -53,15 +53,13 @@ def get_KR_inf(list_energies):
 
     return KR_inf
 
-
 def get_KR(list_energies,kernel_Gamma_width):
 
     KR = complex(1.,0.)*N.real( get_gamma(list_energies+1j*kernel_Gamma_width)) 
 
     return KR
 
-
-def get_SR_inf(list_xi,mu,Green_Gamma_width):
+def get_SR_inf(list_epsilon,mu,Green_Gamma_width):
     """
     This function returns the effective contribution coming from the 
     linear term in the KR kernel. The integral over this linear part is 
@@ -73,15 +71,39 @@ def get_SR_inf(list_xi,mu,Green_Gamma_width):
 
     prefactor =  -complex(1.,0.)*2.*N.pi*hvF**2/D_cutoff**2
     
-    Term_1 = N.log(1.+list_xi**2/Green_Gamma_width**2)
+    Term_1 = N.log(1.+list_epsilon**2/Green_Gamma_width**2)
 
-    Term_2 = 1j*N.pi-2.*1j*N.arctan(list_xi/Green_Gamma_width)
+    Term_2 = 1j*N.pi-2.*1j*N.arctan(list_epsilon/Green_Gamma_width)
 
-    energy_factor =  list_xi+mu+1j*Green_Gamma_width
+    energy_factor =  list_epsilon +mu + 1j*Green_Gamma_width
 
     SR_inf  =  prefactor/(2.*N.pi*1j)* energy_factor *(Term_1+ Term_2)
 
     return SR_inf
+
+def get_SR_finite_cutoff_correction(list_epsilon,mu,Lambda_cutoff,Green_Gamma_width):
+    """
+    The integral
+
+    SR_min_inf(epsilon,Gamma) =  int dxi/(i pi) f(xi) K^R(xi+mu) - K^{infty}(xi+mu)/(xi-(epsilon + i Gamma) )
+
+    Converges very slowly with the integration cutoff Lambda_cutoff. Since Kramers-Kronig necessarily
+    uses such a cutoff, this routine implements the first correction to the cutoff integral when the
+    integration bounds go to infinity.
+
+    
+    See document "computing_J.pdf" for details.
+    """
+    prefactor = -1j*hvF**2/2.        
+    den = 1./(list_epsilon+mu+1j*Green_Gamma_width)
+
+    Term_1 = N.log( (Green_Gamma_width**2+(Lambda_cutoff+list_epsilon)**2)/(Lambda_cutoff-mu)**2)
+    Term_2 = 1j*N.pi-1j*2*N.arctan((Lambda_cutoff+list_epsilon)/Green_Gamma_width)
+
+    correction = prefactor*den*(Term_1+Term_2)
+
+    return correction 
+
 
 def get_KI(list_energies,kernel_Gamma_width):
 
@@ -106,6 +128,8 @@ class ScatteringKernel:
 
     TR(x, kappa, eta hw) = int d xi/(i pi) ( f(xi) - f(xi+eta hw) ) KR(xi+mu)/(xi-(x+i kappa Green_Gamma))
     TI(x, kappa, eta hw) = int d xi/(i pi) ( f(xi) - f(xi+eta hw) ) KI(xi+mu)/(xi-(x+i kappa Green_Gamma))
+
+    Note that SR is formally divergent, so various regularization schemes are introduced.
 
     """
 
@@ -142,6 +166,9 @@ class ScatteringKernel:
 
         xi_max = 4.*D_cutoff
         xi_min =-4.*D_cutoff
+
+        Lambda_cutoff = xi_max 
+
         d_xi   = (xi_max-xi_min)/(self.n_xi_grid-1.)
         iloop  = N.arange(self.n_xi_grid)
 
@@ -167,19 +194,27 @@ class ScatteringKernel:
 
         # apply the Kramers-Kronig transformations 
         print ' ====   Computing SR and SI ====='
-        self.list_SI  = KK.apply_kramers_kronig_FFT_convolution(f*KI)
+        self.SI  = KK.apply_kramers_kronig_FFT_convolution(f*KI)
 
         # Compute SR in multiple steps, to avoid singular kernel
-        SR_1 = KK.apply_kramers_kronig_FFT_convolution(f*(KR-KR_inf))
-        SR_2 = KK.apply_kramers_kronig_FFT_convolution((f-Theta)*KR_inf)
-        SR_inf = get_SR_inf(self.list_xi,self.mu,self.Green_Gamma_width)
 
-        self.list_SR  = SR_1+SR_2+SR_inf 
+        
+        # Keep the following arrays in memory, for testing and debugging!            
+        self.SR_1_cutoff = KK.apply_kramers_kronig_FFT_convolution(f*(KR-KR_inf)) # converges slowly because of cutoff
+        self.SR_1_cutoff_correction = \
+                get_SR_finite_cutoff_correction(self.list_xi,self.mu,Lambda_cutoff,self.Green_Gamma_width)
+
+        self.SR_1 = self.SR_1_cutoff+ self.SR_1_cutoff_correction 
+
+        self.SR_2 = KK.apply_kramers_kronig_FFT_convolution((f-Theta)*KR_inf)
+        self.SR_inf = get_SR_inf(self.list_xi,self.mu,self.Green_Gamma_width)
+
+        self.SR  = self.SR_1+self.SR_2+self.SR_inf 
 
         # Initialize arrays with dimensions [ eta, hw, n_xi_grid]
         # Arrays are C ordered by default, so last index loops fastest.
-        self.list_TR = complex(0.,0.)*N.zeros([2,len(self.list_hw_ext),self.n_xi_grid])
-        self.list_TI = complex(0.,0.)*N.zeros([2,len(self.list_hw_ext),self.n_xi_grid])
+        self.TR = complex(0.,0.)*N.zeros([2,len(self.list_hw_ext),self.n_xi_grid])
+        self.TI = complex(0.,0.)*N.zeros([2,len(self.list_hw_ext),self.n_xi_grid])
 
         # Bite the bullet, do this fairly heavy computation!
         for i_eta, eta in enumerate(self.list_eta):
@@ -192,8 +227,8 @@ class ScatteringKernel:
 
                 df = f-f_ehw
 
-                self.list_TR[i_eta,i_hw_ext,:] = KK.apply_kramers_kronig_FFT_convolution(df*KR)
-                self.list_TI[i_eta,i_hw_ext,:] = KK.apply_kramers_kronig_FFT_convolution(df*KI)
+                self.TR[i_eta,i_hw_ext,:] = KK.apply_kramers_kronig_FFT_convolution(df*KR)
+                self.TI[i_eta,i_hw_ext,:] = KK.apply_kramers_kronig_FFT_convolution(df*KI)
 
         return
 
