@@ -336,7 +336,7 @@ class ScatteringKernel:
 
         return S_I
 
-    def get_i_eta_index(eta):
+    def get_i_eta_index(self,eta):
         if eta == -1.:
             i_eta = 0
         elif eta == 1.:
@@ -351,7 +351,7 @@ class ScatteringKernel:
         return i_eta
 
 
-    def get_hw_indices_and_interpolation(hw):
+    def get_hw_indices_and_interpolation(self,hw):
         """
         This routine finds the indices of the closest
         tabulated values in the list_hw_ext array.
@@ -383,12 +383,12 @@ class ScatteringKernel:
         """
 
         # find the index of eta
-        i_eta = get_i_eta_index(eta)
+        i_eta = self.get_i_eta_index(eta)
 
         # find the indices of closest frequencies in table
         # as well as interpolation coefficients
 
-        i_hw_1, i_hw_2, alpha_1, alpha_2 = get_hw_indices_and_interpolation(hw)
+        i_hw_1, i_hw_2, alpha_1, alpha_2 = self.get_hw_indices_and_interpolation(hw)
 
         # evaluate spline            
         u = N.real ( list_epsilon )
@@ -414,12 +414,12 @@ class ScatteringKernel:
         """
 
         # find the index of eta
-        i_eta = get_i_eta_index(eta)
+        i_eta = self.get_i_eta_index(eta)
 
         # find the indices of closest frequencies in table
         # as well as interpolation coefficients
 
-        i_hw_1, i_hw_2, alpha_1, alpha_2 = get_hw_indices_and_interpolation(hw)
+        i_hw_1, i_hw_2, alpha_1, alpha_2 = self.get_hw_indices_and_interpolation(hw)
 
         # evaluate spline            
         u = N.real ( list_epsilon )
