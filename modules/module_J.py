@@ -49,7 +49,8 @@ class JGridFunction:
         self.beta= beta
 
         # Create the scattering kernel object
-        self.SK = ScatteringKernel(self.mu,self.beta,self.kernel_Gamma_width,self.Green_Gamma_width)
+        # Let's assume linear spline for now
+        self.SK = ScatteringKernel(self.mu,self.beta,self.kernel_Gamma_width,self.Green_Gamma_width,spline_order = 1)
 
         # let's assume a default filename; read in the needed parameters
         filename ='scattering_spline.nc'
@@ -79,7 +80,7 @@ class JGridFunction:
                     key = (n1,n2,n3)
                     self.index_dictionary[key] = index
 
-    def get_D(self,list_xi, list_xi2):
+    def get_D(self,list_epsilon, list_xi2):
         """
         This routine computes the "D" function, which is fairly complicated to reproduce here.
 
@@ -91,59 +92,59 @@ class JGridFunction:
 
         We'll assume that list_xi  and list_xi2 have the same dimension [nk].
 
-        The equations implemented here are obtained in my document computing_J.pdf .
+        The equations implemented here are obtained in my document "computing_J.pdf" .
         """
 
         # Initialize D
-        D = complex(0.,0.)*N.zeros_like(list_xi)
+        D = complex(0.,0.)*N.zeros_like(list_epsilon)
 
         # Build some ingredients which we'll use over and over.
-        xi1  = 1.*list_xi
-        xi2  = 1.*list_xi2
-
 
         for eta in [-1,1]:
 
-            KK_fKR_xi1  = self.SK.get_integral_KK('fKR', xi1, sign_Gamma= eta)
-            KK_fKI_xi1  = self.SK.get_integral_KK('fKI', xi1, sign_Gamma= eta)
+            S_R_epsilon = self.SK.get_spline_SR(list_epsilon, sign_Gamma = eta)
+            S_I_epsilon = self.SK.get_spline_SI(list_epsilon, sign_Gamma = eta)
 
-            KK_dfKR_xi1  = self.SK.get_integral_KK('dfKR', xi1, sign_Gamma= eta)
-            KK_dfKI_xi1  = self.SK.get_integral_KK('dfKI', xi1, sign_Gamma= eta)
+            T_R_epsilon = self.SK.get_spline_TR(list_epsilon, eta, self.hw, sign_Gamma = eta)
+            T_I_epsilon = self.SK.get_spline_TI(list_epsilon, eta, self.hw, sign_Gamma = eta)
 
 
-            for phi in [-1,1]:
+            for phi in [-1.,1.]:
+
+                prefactor = -0.5*complex(1.,0.)*phi*eta
 
                 #============
                 # First term
                 #============
 
-                real_denominator    = xi1-xi2+phi*self.hw
+                real_denominator    = list_epsilon-(list_xi2+phi*self.hw)
                 one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
 
-                prefactor = 0.5*complex(1.,0.)*phi*one_on_denominator  
 
+                S_R_xi2_phw = self.SK.get_spline_SR(list_xi2+phi*self.hw, sign_Gamma = eta)
+                S_I_xi2_phw = self.SK.get_spline_SI(list_xi2+phi*self.hw, sign_Gamma = eta)
+    
+                numerator   = S_R_epsilon -  S_R_xi2_phw  + 1j*eta* (S_I_epsilon- S_I_xi2_phw) 
 
-                D += prefactor* ( eta*KK_fKR_xi1   \
-                                 -eta*self.SK.get_integral_KK('fKR', xi2-phi*self.hw, sign_Gamma= eta) \
-                                 +1j*KK_fKI_xi1 \
-                                 -1j*self.SK.get_integral_KK('fKI', xi2-phi*self.hw, sign_Gamma= eta) )
+                D += prefactor*numerator*one_on_denominator
 
                 #============
                 # second term
                 #============
 
-                real_denominator    = xi1-xi2+eta*self.hw
+                real_denominator    = list_epsilon-(list_xi2-eta*self.hw)
+
                 if eta == phi:
                     one_on_denominator  = N.real(self.cutoff_denominator(real_denominator,fadeeva_width=1e-6))
                 else:
                     one_on_denominator = 1./(real_denominator + 1j*(eta-phi)*self.Green_Gamma_width)
 
-                prefactor = 0.5*complex(1.,0.)*phi*self.hw*one_on_denominator  
+                T_R_xi2_ehw = self.SK.get_spline_TR(list_xi2-eta*self.hw, eta, self.hw, sign_Gamma = phi)
+                T_I_xi2_ehw = self.SK.get_spline_TI(list_xi2-eta*self.hw, eta, self.hw, sign_Gamma = phi)
+    
+                numerator   = T_R_epsilon -  T_R_xi2_ehw  + 1j*eta* (T_I_epsilon- T_I_xi2_ehw) 
 
-                D += prefactor* ( KK_dfKR_xi1   \
-                                 -self.SK.get_integral_KK('dfKR', xi2-eta*self.hw, sign_Gamma= phi) \
-                                 +1j*eta*KK_dfKI_xi1 \
-                                 -1j*eta*self.SK.get_integral_KK('dfKI', xi2-eta*self.hw, sign_Gamma= phi) )
+                D += prefactor*numerator*one_on_denominator
 
 
         return D
