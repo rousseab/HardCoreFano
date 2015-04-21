@@ -123,8 +123,6 @@ class JGridFunction:
                 # identify singular points
                 ind_s = N.where( N.abs(real_denominator) < self.singularity_tol)[0]
 
-                if len(ind_s) > 0:
-                    print ind_s 
                 real_denominator[ind_s] = real_denominator[ind_s] +1j # no harm done, just avoiding NaN
 
                 one_on_denominator  = complex(1.,0.)/real_denominator
