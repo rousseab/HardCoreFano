@@ -45,7 +45,7 @@ class JGridFunction:
         # derivative of the function considred
         #  we'll use a Fadeeva broadening instead of a lorentzian broadening.
         self.singularity_delta = 1e-4   # eV
-        self.singularity_tol   = 1e-12  # eV
+        self.singularity_tol   = 1e-8  # eV
 
         self.mu  = mu
         self.beta= beta
@@ -118,14 +118,16 @@ class JGridFunction:
                 #============
                 # First term
                 #============
-                denominator    = complex(1.,0.)*( list_epsilon-(list_xi2+phi*self.hw) )
+                real_denominator = complex(1.,0.)*( list_epsilon-(list_xi2+phi*self.hw) )
 
                 # identify singular points
-                ind_s = N.where( N.abs(denominator) < self.singularity_tol)
+                ind_s = N.where( N.abs(real_denominator) < self.singularity_tol)[0]
 
-                denominator[ind_s] = denominator[ind_s] +1j # no harm done, just avoiding NaN
+                if len(ind_s) > 0:
+                    print ind_s 
+                real_denominator[ind_s] = real_denominator[ind_s] +1j # no harm done, just avoiding NaN
 
-                one_on_denominator  = complex(1.,0.)/denominator
+                one_on_denominator  = complex(1.,0.)/real_denominator
 
 
                 S_R_xi2_phw = self.SK.get_spline_SR(list_xi2+phi*self.hw, sign_Gamma = eta)
@@ -166,10 +168,11 @@ class JGridFunction:
 
                 if eta == phi:
                     # identify singular points
-                    ind_s = N.where( N.abs(real_denominator) < self.singularity_tol)
+                    ind_s = N.where( N.abs(real_denominator) < self.singularity_tol)[0]
 
-                    denominator[ind_s] = denominator[ind_s] +1j # no harm done, just avoiding NaN
-                    one_on_denominator  = complex(1.,0.)/denominator
+                    real_denominator[ind_s] = real_denominator[ind_s] +1j # no harm done, just avoiding NaN
+
+                    one_on_denominator  = complex(1.,0.)/real_denominator
 
                     contribution = prefactor*numerator*one_on_denominator
 
@@ -232,7 +235,7 @@ class JGridFunction:
             list_D1 = []
             list_D3 = []
 
-            # Compute the C functions
+            # Compute the D functions
             for n1, list_epsilon1 in zip([0,1],list_epsilon_k):
                 list_xi1 = list_epsilon1 - self.mu
                 D1       = self.get_D(list_xi1, list_xi2)
@@ -261,7 +264,6 @@ class JGridFunction:
 
                     contribution = den13*(D1-D3) 
 
-                    # add the "smooth" part to the J function
                     self.J[index,:] += self.conversion_factor*contribution
 
         return 
