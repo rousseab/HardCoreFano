@@ -146,7 +146,7 @@ class JGridFunction:
                 singular_numerator   = S_R_epsilon_singular -  S_R_xi2_phw_singular  \
                                         + 1j*eta* (S_I_epsilon_singular- S_I_xi2_phw_singular) 
 
-                singular_contribution = prefactor*singular_numerator*/self.singularity_delta
+                singular_contribution = prefactor*singular_numerator/self.singularity_delta
 
                 contribution[ind_s] = singular_contribution 
 
@@ -183,7 +183,7 @@ class JGridFunction:
                     singular_numerator   = T_R_epsilon_singular -  T_R_xi2_ehw_singular  \
                                                 + 1j*eta* (T_I_epsilon_singular - T_I_xi2_ehw_singular) 
 
-                    singular_contribution = prefactor*singular_numerator*/self.singularity_delta
+                    singular_contribution = prefactor*singular_numerator/self.singularity_delta
 
                     contribution[ind_s] = singular_contribution 
 
