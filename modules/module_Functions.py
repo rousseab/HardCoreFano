@@ -65,6 +65,16 @@ def function_fermi_occupation(eps_k,mu,beta):
 
     return complex(1.,0.)*f_occ
 
+
+def Heaviside_plateau(list_xi):
+    """
+    This function implements Theta(-xi), namely 1 if xi < 0 and 0 if xi >0.
+    If xi = 0, the function will be equal to 1/2.
+    """
+    plateau = 0.5*(1-N.sign(list_xi))
+
+    return plateau
+
 def d_Fermi_dxi(eps_k,mu,beta):
 
     z   = beta*(eps_k- mu)
