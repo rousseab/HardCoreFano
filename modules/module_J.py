@@ -258,9 +258,26 @@ class JGridFunction:
                     index = self.index_dictionary[key]
 
                     # cutoff the 1/0 
-                    den13 = N.real(self.cutoff_denominator(list_xi1-list_xi3,fadeeva_width=1e-6))
+                    real_denominator = complex(1.,0.)*( list_xi1-list_xi3 ) 
 
-                    contribution = den13*(D1-D3) 
+                    # identify singular points
+                    ind_s = N.where( N.abs(real_denominator) < self.singularity_tol)[0]
+
+                    real_denominator[ind_s] = real_denominator[ind_s] +1j # no harm done, just avoiding NaN
+                    one_on_denominator  = complex(1.,0.)/real_denominator
+
+                    numerator = D1-D3
+                    contribution = one_on_denominator*numerator
+
+                    # compute with offset for singular points, if any
+                    D1_singular = D1[ind_s]
+                    D3_singular = self.get_D(list_xi3[ind_s] - self.singularity_delta, list_xi2[ind_s])
+
+                    singular_numerator = D1_singular-D3_singular
+
+                    singular_contribution = singular_numerator/self.singularity_delta
+
+                    contribution[ind_s] = singular_contribution 
 
                     self.J[index,:] += self.conversion_factor*contribution
 
