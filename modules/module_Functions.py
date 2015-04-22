@@ -65,7 +65,6 @@ def function_fermi_occupation(eps_k,mu,beta):
 
     return complex(1.,0.)*f_occ
 
-
 def Heaviside_plateau(list_xi):
     """
     This function implements Theta(-xi), namely 1 if xi < 0 and 0 if xi >0.
