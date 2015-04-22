@@ -100,7 +100,7 @@ for ax in list_ax:
     ax.set_xlabel('$x$ (eV)')
 
 
-ax2.legend(loc=0)
+ax2.legend(  loc='center left', bbox_to_anchor=(1.00,0.50) , fancybox=True,shadow=True,  borderaxespad=0.)
 
 ax1.set_ylabel('Re[$F(x)$]')
 ax2.set_ylabel('Im[$F(x)$]')
@@ -109,6 +109,8 @@ ax2.set_ylabel('Im[$F(x)$]')
 
 
 fig1.suptitle('TESTING $S$: $\mu$ = %i meV, $\Gamma_G$ = %i meV, $\Gamma_\gamma$ = %i meV'%(1000*mu,1000*Green_Gamma_width,1000*kernel_Gamma_width))
-plt.tight_layout()
+#plt.tight_layout()
+fig1.subplots_adjust(   right =     0.70,
+                        wspace=     0.40)
 
 plt.show()
