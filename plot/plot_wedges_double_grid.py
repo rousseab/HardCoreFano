@@ -27,13 +27,28 @@ clip_grid = True
 include_Gamma = False
 """
 
-nmax_coarse = 32
-nmax_fine   = 256
-n_blocks_coarse_to_fine = 12
+"""
+nmax_coarse = 16
+nmax_fine   = 128
+n_blocks_coarse_to_fine = 6
+"""
+
+"""
+nmax_coarse = 8
+nmax_fine   = 32
+n_blocks_coarse_to_fine = 3
+"""
+
+nmax_coarse = 16
+nmax_fine   = 64
+n_blocks_coarse_to_fine = 6
+
+
+
 clip_grid = False
 include_Gamma = True
 
-mu = -0.100 # eV
+mu = -0.400 # eV
 hw =  0.200 # eV
 
 clip_energy = N.abs(mu)+1.00 # eV
