@@ -23,7 +23,7 @@ HW = []
 HWr= []
 
 
-path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/modules/'
+path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_9.0/modules/'
 Renormalizor = CompteMauriRenormalize(path,list_FC,list_R)
 
 for q in kpath.list_k:
@@ -52,7 +52,7 @@ for hw , hwr in zip(HW.transpose(),HWr.transpose()):
             label1 = '__nolabel__'
             label2 = '__nolabel__'
 
-    ax.plot(kpath.list_x,1000*hwr,'b--',lw=4,label=label2)
+    ax.plot(kpath.list_x,1000*hwr,'b-',lw=4,label=label2)
     #ax.plot(kpath.list_x,1000*hw,'r-',lw=4,label=label1)
 
 
