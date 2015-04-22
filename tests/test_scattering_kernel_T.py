@@ -97,7 +97,7 @@ global_parameters = {'eta':eta, 'hw':hw_ext, 'mu':mu, 'beta':beta,
                     'kernel_Gamma_width':kernel_Gamma_width, 
                     'Green_Gamma_width':Green_Gamma_width}
 
-list_xi_numeric = N.arange(-D_cutoff,D_cutoff,0.5)
+list_xi_numeric = N.arange(-2.,2.,0.25)
 
 list_re_TR_numeric, list_im_TR_numeric  =\
     Drive_Numerical_Integrals(list_xi_numeric, integrand_TR, 'epsilon', global_parameters)
@@ -122,41 +122,49 @@ ax2 = fig1.add_subplot(122)
 
 list_ax = [ax1,ax2]
 
-ax1.plot(SK.list_xi,N.real(SK.TR[i_eta,i_hw_ext,:]),'-',label='$T^R$')
-ax1.plot(list_xi_numeric ,list_re_TR_numeric,'o',label='NUMERICAL $T^R$')
-ax1.plot(list_xi_numeric ,list_re_TR_der_numeric,'h',label='Fermi derivative $T^R$')
+lw = 4
+ms = 12
 
-ax1.plot(SK.list_xi,N.real(SK.TI[i_eta,i_hw_ext,:]),'-',label='$T^I$')
-ax1.plot(list_xi_numeric,list_re_TI_numeric,'o',label='NUMERICAL $T^I$')
-ax1.plot(list_xi_numeric ,list_re_TI_der_numeric,'h',label='NUMERICAL Fermi derivative $T^I$')
+ax1.plot(SK.list_xi,N.real(SK.TR[i_eta,i_hw_ext,:]),'r-',lw=lw,label='$T^R$')
+ax1.plot(list_xi_numeric ,list_re_TR_numeric,'o',ms=ms,label='NUMERICAL $T^R$')
+ax1.plot(list_xi_numeric ,list_re_TR_der_numeric,'h--',ms=ms,label='Fermi derivative $T^R$')
 
-
-ax2.plot(SK.list_xi,N.imag(SK.TR[i_eta,i_hw_ext,:]),'-',label='$T^R$')
-ax2.plot(list_xi_numeric ,list_im_TR_numeric,'o',label='NUMERICAL $T^R$')
-ax2.plot(list_xi_numeric ,list_im_TR_der_numeric,'h',label='NUMERICAL Fermi derivative $T^R$')
+ax1.plot(SK.list_xi,N.real(SK.TI[i_eta,i_hw_ext,:]),'b-',lw=lw,label='$T^I$')
+ax1.plot(list_xi_numeric,list_re_TI_numeric,'o',ms=ms,label='NUMERICAL $T^I$')
+ax1.plot(list_xi_numeric ,list_re_TI_der_numeric,'h--',ms=ms,label='NUMERICAL Fermi derivative $T^I$')
 
 
-ax2.plot(SK.list_xi,N.imag(SK.TI[i_eta,i_hw_ext,:]),'-',label='$T^I$')
-ax2.plot(list_xi_numeric,list_im_TI_numeric,'o',label='NUMERICAL $T^I$')
-ax2.plot(list_xi_numeric,list_im_TI_der_numeric,'h',label='NUMERICAL Fermi derivative $T^I$')
+ax2.plot(SK.list_xi,N.imag(SK.TR[i_eta,i_hw_ext,:]),'r-',lw=lw,label='$T^R$')
+ax2.plot(list_xi_numeric ,list_im_TR_numeric,'o',ms=ms,label='NUMERICAL $T^R$')
+ax2.plot(list_xi_numeric ,list_im_TR_der_numeric,'h--',ms=ms,label='NUMERICAL Fermi derivative $T^R$')
+
+
+ax2.plot(SK.list_xi,N.imag(SK.TI[i_eta,i_hw_ext,:]),'b-',lw=lw,label='$T^I$')
+ax2.plot(list_xi_numeric,list_im_TI_numeric,'o',ms=ms,label='NUMERICAL $T^I$')
+ax2.plot(list_xi_numeric,list_im_TI_der_numeric,'h--',ms=ms,label='NUMERICAL Fermi derivative $T^I$')
 
 
 
 
 
 for ax in list_ax:
-    ax.set_xlabel('$x$ (eV)')
+    ax.set_xlabel('$\epsilon$ (eV)')
+    ax.set_xlim([-3,3])
 
 
-ax2.legend(loc=0)
+ax2.legend(  loc='center left', bbox_to_anchor=(1.00,0.50) , fancybox=True,shadow=True,  borderaxespad=0.)
 
 ax1.set_ylabel('Re[$F(x)$]')
 ax2.set_ylabel('Im[$F(x)$]')
 
+
 # adjust the figure so that there is no wasted space
 
 
-fig1.suptitle('TESTING $S$: $\eta$ = %i, $\hbar\omega_{ext}$ = %i meV, $\mu$ = %i meV, $\Gamma_G$ = %i meV, $\Gamma_\gamma$ = %i meV'%(eta, 1000*hw_ext, 1000*mu,1000*Green_Gamma_width,1000*kernel_Gamma_width))
-plt.tight_layout()
+fig1.suptitle('TESTING $T$: $\eta$ = %i, $\hbar\omega_{ext}$ = %i meV, $\mu$ = %i meV, $\Gamma_G$ = %i meV, $\Gamma_\gamma$ = %i meV'%(eta, 1000*hw_ext, 1000*mu,1000*Green_Gamma_width,1000*kernel_Gamma_width))
+#plt.tight_layout()
+fig1.subplots_adjust(   right =     0.70,
+                        wspace=     0.40)
+
 
 plt.show()
