@@ -9,14 +9,7 @@ from common import *
 #----------------------------------------
 # import modules
 #----------------------------------------
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from matplotlib.font_manager import  FontProperties
 
-import matplotlib.cm as cm
-
-mpl.rcParams['font.size'] = 20.
-legendfonts = FontProperties(size=16)
 
 
 path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_10.0/modules/'
