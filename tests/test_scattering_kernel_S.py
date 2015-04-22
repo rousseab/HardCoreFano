@@ -20,15 +20,16 @@ beta = 1./(kB*T)
 
 mu    = -0.400  
 kernel_Gamma_width = 0.200  # 200 meV
-Green_Gamma_width  = 0.100   
+Green_Gamma_width  = 0.050   
 
-list_hw_ext = N.arange(0.100,0.220,0.10)
+list_hw_ext = N.arange(0.100,0.220,0.001)
 
-filename ='scattering_spline.nc'
+filename ='scattering_spline_TEST.nc'
+n_xi_grid = 8001
 
-SK = ScatteringKernel(mu, beta, kernel_Gamma_width, Green_Gamma_width, spline_order = 3)
-SK.build_scattering_kernel_integrals(list_hw_ext, n_xi_grid = 4001)
-
+SK = ScatteringKernel(mu, beta, kernel_Gamma_width, Green_Gamma_width, spline_order = 1)
+SK.build_scattering_kernel_integrals(list_hw_ext, n_xi_grid = n_xi_grid )
+#SK.read_spline_parameters(filename)
 
 # Compute the  kernels
 def integrand_SR_minus_S_infty(xi, epsilon, mu, beta, kernel_Gamma_width, Green_Gamma_width):
@@ -64,9 +65,6 @@ list_re_SRinf_numeric, list_im_SRinf_numeric  =\
 
 list_re_SI_numeric, list_im_SI_numeric  =\
     Drive_Numerical_Integrals(list_xi_numeric, integrand_SI, 'epsilon', global_parameters)
-
-
-
 
 
 h = 8  # figure height
