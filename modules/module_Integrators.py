@@ -16,14 +16,15 @@ import sys
 def AreaIntegrator(wedge,list_Fk):
     """
     This function integrates 
-         I(w) = int d2k F_k(w).
+         I(w) = int d2k F_k(w) 
 
+    assuming a linear dispersion within each triangle in the wedge.
 
-        It is assumed that list_Fk = [ ---- Fk(w0) ---- ]
-                                     [ ---- Fk(w1) ---- ]
-                                     [ ---- Fk(w2) ---- ]
-                                     [ ---- ...... ---- ]
-                                     [ ---- Fk(wN) ---- ]
+    It is assumed that list_Fk = [ ---- Fk1 (w) ---- ]
+                                 [ ---- Fk2 (w) ---- ]
+                                 [ ---- Fk3 (w) ---- ]
+                                 [ ---- ......  ---- ]
+                                 [ ---- FkN (w) ---- ]
     """
 
     nk, nw = list_Fk.shape
