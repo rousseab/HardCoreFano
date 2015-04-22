@@ -107,9 +107,9 @@ def read_splmake(filename):
     re_TI_spline = ncfile.variables['re_TI_spline'][:] 
     im_TI_spline = ncfile.variables['im_TI_spline'][:] 
 
-    return  re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline,
-            re_TR_spline, im_TR_spline, re_TI_spline, im_TI_spline,
-            file_list_xi, file_list_hw_ext, file_mu, file_beta, 
+    return  re_SR_spline, im_SR_spline, re_SI_spline, im_SI_spline,\
+            re_TR_spline, im_TR_spline, re_TI_spline, im_TI_spline,\
+            file_list_xi, file_list_hw_ext, file_mu, file_beta, \
             file_kernel_Gamma_width, file_Green_Gamma_width, file_spline_order   
 
 
