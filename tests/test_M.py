@@ -19,7 +19,7 @@ mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
 
 
-path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_4.0/modules/'
+path='/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_10.0/modules/'
 list_R, list_FC  =  build_force_constants_Dubay_using_symmetry()
 Renormalizor = CompteMauriRenormalize(path,list_FC,list_R)
 
@@ -122,9 +122,6 @@ for ip, im in zip(list_i_plus,list_i_minus):
     if error_Jy> 1e-10:
         print 'ERROR IN Jy SYMMETRY! error = %12.6e'%error_Jy
         found_Error = True
-
-
-
 
 
 
