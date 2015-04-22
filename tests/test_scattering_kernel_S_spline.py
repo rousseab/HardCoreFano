@@ -25,11 +25,12 @@ Green_Gamma_width  = 0.050
 list_hw_ext = N.arange(0.100,0.220,0.001)
 #list_hw_ext = N.arange(0.100,0.220,0.1)
 
-filename ='scattering_spline_TEST.nc'
+filename ='scattering_spline_TEST_S.nc'
 n_xi_grid = 8001
 
 SK = ScatteringKernel(mu, beta, kernel_Gamma_width, Green_Gamma_width, spline_order = 1)
 SK.build_scattering_kernel_integrals(list_hw_ext, n_xi_grid = n_xi_grid )
+SK.build_and_write_spline_parameters(filename)
 SK.read_spline_parameters(filename)
 
 # Compute the  kernels
@@ -106,12 +107,14 @@ ax2.plot(list_xi_numeric,list_im_SI_numeric,'o',label='NUMERICAL $S^I$')
 
 for ax in list_ax:
     ax.set_xlabel('$x$ (eV)')
+    ax.set_xlim([-D_cutoff,D_cutoff])
 
 
 ax2.legend(loc=0)
 
 ax1.set_ylabel('Re[$F(x)$]')
 ax2.set_ylabel('Im[$F(x)$]')
+
 
 # adjust the figure so that there is no wasted space
 
