@@ -361,16 +361,16 @@ class ScatteringKernel:
         bad things will happen! Testing for this here will be numerically costly...
         """
 
-        i_hw_1 = N.where(hw < SK.list_hw_ext)[0][0]  # below
-        i_hw_2 = N.where(hw > SK.list_hw_ext)[0][-1] # above
+        i_hw_1 = N.where(hw < self.list_hw_ext)[0][0]  # below
+        i_hw_2 = N.where(hw > self.list_hw_ext)[0][-1] # above
 
         if i_hw_1 == i_hw_2:
             #  a grid point has been selected
             alpha_1 = 1.
             alpha_2 = 0.
         else:
-            hw_1 = SK.list_hw_ext[i_hw_min]
-            hw_2 = SK.list_hw_ext[i_hw_max]
+            hw_1 = self.list_hw_ext[i_hw_1]
+            hw_2 = self.list_hw_ext[i_hw_2]
 
             alpha_1 = (hw_2-hw)/(hw_2-hw_1)
             alpha_2 = (hw-hw_1)/(hw_2-hw_1)
