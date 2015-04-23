@@ -77,26 +77,22 @@ class NetcdfHandler(object):
 
         return J
 
-
 class NumericalJ(object):
     """
     Object to produce the integrand leading to the J function.
     """
 
-    def __init__(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
+    def __init__(self, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
         """
         Initialize all the parameters
         """
-        self.xi_n1k = xi_n1k 
-        self.xi_n2k = xi_n2k 
-        self.xi_n3kq= xi_n3kq
         self.hw     = hw
         self.mu     = mu
         self.beta   = beta
         self.kernel_Gamma_width = kernel_Gamma_width
         self.Green_Gamma_width = Green_Gamma_width
 
-    def get_exact_J_integrand(self,xi):
+    def get_exact_J_integrand(self,xi, xi_n1k, xi_n2k, xi_n3kq):
         """
         This function computes the exact integrand leading to the J function.
         """
@@ -116,14 +112,14 @@ class NumericalJ(object):
 
             kernel = KR-1j*eta*KI
 
-            D_n1k  = complex(1.,0.)/(xi - self.xi_n1k  + 1j*eta*self.Green_Gamma_width)
-            D_n3kq = complex(1.,0.)/(xi - self.xi_n3kq + 1j*eta*self.Green_Gamma_width)
+            D_n1k  = complex(1.,0.)/(xi - xi_n1k  + 1j*eta*self.Green_Gamma_width)
+            D_n3kq = complex(1.,0.)/(xi - xi_n3kq + 1j*eta*self.Green_Gamma_width)
 
-            D_n2k_1 = complex(1.,0.)/(xi - self.xi_n2k -eta*self.hw - 1j*self.Green_Gamma_width)
-            D_n2k_2 = complex(1.,0.)/(xi - self.xi_n2k -eta*self.hw + 1j*self.Green_Gamma_width)
+            D_n2k_1 = complex(1.,0.)/(xi - xi_n2k -eta*self.hw - 1j*self.Green_Gamma_width)
+            D_n2k_2 = complex(1.,0.)/(xi - xi_n2k -eta*self.hw + 1j*self.Green_Gamma_width)
 
-            D_n2k_3 = complex(1.,0.)/(xi - self.xi_n2k - self.hw + 1j*eta*self.Green_Gamma_width)
-            D_n2k_4 = complex(1.,0.)/(xi - self.xi_n2k + self.hw + 1j*eta*self.Green_Gamma_width)
+            D_n2k_3 = complex(1.,0.)/(xi - xi_n2k - self.hw + 1j*eta*self.Green_Gamma_width)
+            D_n2k_4 = complex(1.,0.)/(xi - xi_n2k + self.hw + 1j*eta*self.Green_Gamma_width)
 
             f_xi_ehw = function_fermi_occupation(list_xi-eta*self.hw,0.,self.beta)[0]
 
