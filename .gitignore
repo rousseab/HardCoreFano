@@ -1,6 +1,7 @@
 *.pyc
 *.nc
 *.dat
+*.pdf
 *.tar.bz2
 local_runs/
 from_Briaree/
