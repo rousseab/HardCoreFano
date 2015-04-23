@@ -117,6 +117,35 @@ def build_command(executable,mu,T,nk_max_coarse, nk_max_fine, nblocks,\
 
     return command
 
+def build_command_single_grid(executable,mu,T, nk_max_fine, \
+                        Green_Gamma_width, kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
+
+    command = [executable,
+               '%8.4f'%mu,
+               '%8.2f'%T,
+                  '%i'%nk_max_fine,
+               '%8.4f'%Green_Gamma_width,
+               '%8.4f'%kernel_Gamma_width,
+             '%16.12f'%hw_ph,
+             '%20.16f'%q_ph[0],
+             '%20.16f'%q_ph[1],
+             '%20.16f'%N.real(E_ph[0]),
+             '%20.16f'%N.imag(E_ph[0]),
+             '%20.16f'%N.real(E_ph[1]),
+             '%20.16f'%N.imag(E_ph[1]),
+             '%20.16f'%N.real(E_ph[2]),
+             '%20.16f'%N.imag(E_ph[2]),
+             '%20.16f'%N.real(E_ph[3]),
+             '%20.16f'%N.imag(E_ph[3]),
+             '%20.16f'%N.real(E_ph[4]),
+             '%20.16f'%N.imag(E_ph[4]),
+             '%20.16f'%N.real(E_ph[5]),
+             '%20.16f'%N.imag(E_ph[5]),
+                  '%s'%output_filename]
+
+    return command
+
+
 def build_string(mu,T,nk_max_coarse, nk_max_fine, nblocks,\
                     Green_Gamma_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,output_filename):
 
