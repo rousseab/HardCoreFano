@@ -77,49 +77,66 @@ class NetcdfHandler(object):
 
         return J
 
-def get_exact_J_integrand(xi, xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
+
+class NumericalJ(object):
     """
-    This function computes the exact integrand leading to the J function.
+    Object to produce the integrand leading to the J function.
     """
 
-    J_integrand_df = complex(0.,0.)
-    J_integrand_f  = complex(0.,0.)
+    def __init__(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
+        """
+        Initialize all the parameters
+        """
+        self.xi_n1k = xi_n1k 
+        self.xi_n2k = xi_n2k 
+        self.xi_n3kq= xi_n3kq
+        self.hw     = hw
+        self.mu     = mu
+        self.beta   = beta
+        self.kernel_Gamma_width = kernel_Gamma_width
+        self.Green_Gamma_width = Green_Gamma_width
 
-    list_xi = N.array([xi])
+    def get_exact_J_integrand(self,xi):
+        """
+        This function computes the exact integrand leading to the J function.
+        """
 
-    KR = get_KR(list_xi+mu,kernel_Gamma_width)[0]
-    KI = get_KI(list_xi+mu,kernel_Gamma_width)[0]
+        J_integrand = complex(0.,0.)
 
-    f_xi = function_fermi_occupation(list_xi,0.,beta)[0]
+        list_xi = N.array([xi])
 
-    for eta in [-1,1]:
-        prefactor = eta/(2.*N.pi*1j)
+        # hack to evaluate kernels properly
+        KR = get_KR(list_xi+self.mu,self.kernel_Gamma_width)[0]
+        KI = get_KI(list_xi+self.mu,self.kernel_Gamma_width)[0]
 
-        kernel = KR-1j*eta*KI
+        f_xi = function_fermi_occupation(list_xi,0.,self.beta)[0]
 
-        D_n1k  = complex(1.,0.)/(xi - xi_n1k  + 1j*eta*Green_Gamma_width)
-        D_n3kq = complex(1.,0.)/(xi - xi_n3kq + 1j*eta*Green_Gamma_width)
+        for eta in [-1,1]:
+            prefactor = eta/(2.*N.pi*1j)
 
-        D_n2k_1 = complex(1.,0.)/(xi - xi_n2k -eta*hw - 1j*Green_Gamma_width)
-        D_n2k_2 = complex(1.,0.)/(xi - xi_n2k -eta*hw + 1j*Green_Gamma_width)
+            kernel = KR-1j*eta*KI
 
-        D_n2k_3 = complex(1.,0.)/(xi - xi_n2k - hw + 1j*eta*Green_Gamma_width)
-        D_n2k_4 = complex(1.,0.)/(xi - xi_n2k + hw + 1j*eta*Green_Gamma_width)
+            D_n1k  = complex(1.,0.)/(xi - self.xi_n1k  + 1j*eta*self.Green_Gamma_width)
+            D_n3kq = complex(1.,0.)/(xi - self.xi_n3kq + 1j*eta*self.Green_Gamma_width)
 
-        f_xi_ehw = function_fermi_occupation(list_xi-eta*hw,0.,beta)[0]
+            D_n2k_1 = complex(1.,0.)/(xi - self.xi_n2k -eta*self.hw - 1j*self.Green_Gamma_width)
+            D_n2k_2 = complex(1.,0.)/(xi - self.xi_n2k -eta*self.hw + 1j*self.Green_Gamma_width)
 
-        Term_1  =  ( f_xi - f_xi_ehw ) * (D_n2k_1 - D_n2k_2) 
+            D_n2k_3 = complex(1.,0.)/(xi - self.xi_n2k - self.hw + 1j*eta*self.Green_Gamma_width)
+            D_n2k_4 = complex(1.,0.)/(xi - self.xi_n2k + self.hw + 1j*eta*self.Green_Gamma_width)
 
-        Term_2  =   f_xi * (D_n2k_3 - D_n2k_4) 
+            f_xi_ehw = function_fermi_occupation(list_xi-eta*self.hw,0.,self.beta)[0]
 
-        common_factor = prefactor*kernel*D_n1k*D_n3kq 
+            Term_1  =  ( f_xi - f_xi_ehw ) * (D_n2k_1 - D_n2k_2) 
 
-        J_integrand_df += common_factor*Term_1  
-        J_integrand_f  += common_factor*Term_2  
+            Term_2  =   f_xi * (D_n2k_3 - D_n2k_4) 
 
-    J_integrand = J_integrand_df+ J_integrand_f  
+            common_factor = prefactor*kernel*D_n1k*D_n3kq 
 
-    return J_integrand, J_integrand_df, J_integrand_f  
+            J_integrand += common_factor*(Term_1  + Term_2)
+
+        return J_integrand
+
 
 def get_exact_linear_kernel_J_integrand(xi, xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
     """
@@ -243,7 +260,6 @@ def get_J_df_approx(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, G
 
 
     return J_integrand_df
-
 
 
 
