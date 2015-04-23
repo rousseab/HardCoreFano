@@ -106,5 +106,6 @@ grid = TesselationGrid(nmax_fine)
 OkComputer = Compute_Loop_Function(mu, beta, q_ph, E_ph, hw_ph, grid, kernel_Gamma_width, Green_Gamma_width)
 
 OkComputer.Compute_R_and_I()
-
+nmax_coarse = 0
+nblock = 0
 write_to_file(OkComputer, nmax_coarse, nmax_fine, nblock, hw_ph, filename)
