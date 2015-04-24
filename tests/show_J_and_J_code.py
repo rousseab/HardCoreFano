@@ -31,8 +31,7 @@ hw_ext = 0.1755 # meV
 #state_n2 = 'interband'
 state_n2 = 'intraband'
 
-filename = 'J_Green_Gamma=%i_meV_mu=%i_meV_hw=%i_meV.nc'%(1000*Green_Gamma_width,1000*mu,1000*hw_ext)
-#filename = 'J_Green_Gamma=%i_meV_mu=%i_meV_hw=%3.1f_meV.nc'%(1000*Green_Gamma_width,1000*mu,1000*hw_ext)
+filename = 'J_Green_Gamma=%i_meV_mu=%i_meV_hw=%3.1f_meV.nc'%(1000*Green_Gamma_width,1000*mu,1000*hw_ext)
 handler = NetcdfHandler(filename)
 handler.open_ncfile(mode='r')
 list_xi_1, list_xi_3, mu, Green_Gamma_width, kernel_Gamma_width, hw_ph, beta = handler.read_attributes()
