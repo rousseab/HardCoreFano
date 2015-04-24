@@ -11,7 +11,7 @@ beta = 1./(kB*T)
 
 mu    = -0.400 # meV 
 kernel_Gamma_width = 0.200  # 200 meV
-Green_Gamma_width  = 0.100   
+Green_Gamma_width  = 0.025   
 
 list_hw_ext = N.arange(0.000,0.220,0.001)
 
