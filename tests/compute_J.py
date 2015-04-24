@@ -22,21 +22,21 @@ T = 300.
 beta = 1./(kB*T)
 
 kernel_Gamma_width = 0.200 # eV
-Green_Gamma_width  = 0.100
+Green_Gamma_width  = 0.025
 mu = -0.400
-hw = 0.150
+hw = 0.1755
 
 
 Integrand_generator = NumericalJ( hw, mu, beta, kernel_Gamma_width, Green_Gamma_width)
 
 global_integrand = Integrand_generator.get_exact_J_integrand
 
-list_xi_n3kq = N.arange(-1.0,1.01,0.01)
-list_xi_n1k  = N.arange(-1.0,1.01,0.01)
+list_xi_n3kq = N.arange(-1.0,1.01,0.025)
+list_xi_n1k  = N.arange(-1.0,1.01,0.025)
 
 
 
-filename = 'J_Green_Gamma=%i_meV_mu=%i_meV_hw=%i_meV.nc'%(1000*Green_Gamma_width,1000*mu,1000*hw)
+filename = 'J_Green_Gamma=%i_meV_mu=%i_meV_hw=%4.1f_meV.nc'%(1000*Green_Gamma_width,1000*mu,1000*hw)
 handler = NetcdfHandler(filename)
 handler.open_ncfile(mode='w')
 handler.write_attributes(mu, beta, Green_Gamma_width, kernel_Gamma_width, hw, list_xi_n1k, list_xi_n3kq)
