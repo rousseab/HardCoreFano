@@ -18,7 +18,7 @@ import matplotlib.cm as cm
 mpl.rcParams['font.size'] = 20.
 legendfonts = FontProperties(size=16)
 
-nmax = 4
+nmax = 16
 grid = TesselationGrid(nmax)
 
 
@@ -32,25 +32,25 @@ ax.set_ylabel('$k_y$ ($2\pi/a$)')
 Integral = 0.
 for i,wedge in enumerate(grid.list_wedges):
 
-	ones = N.ones(len(wedge.list_k))
-	list_Fk = ones[:,N.newaxis]
+    ones = N.ones(len(wedge.list_k))
+    list_Fk = ones[:,N.newaxis]
 
-	Integral += AreaIntegrator(wedge,list_Fk)[0]
+    Integral += AreaIntegrator(wedge,list_Fk)[0]
 
-	x = wedge.list_k[:,0]/twopia
-	y = wedge.list_k[:,1]/twopia
-	t = wedge.triangles_indices
-	fc = (i+1)*N.arange(len(t))[::-1]
+    x = wedge.list_k[:,0]/twopia
+    y = wedge.list_k[:,1]/twopia
+    t = wedge.triangles_indices
+    fc = (i+1)*N.arange(len(t))[::-1]
         
 
-	ax.triplot(x,y,triangles=t)
+    ax.triplot(x,y,triangles=t)
 
 
 FBZ_area = (2.*N.pi)**2/Area
 error = FBZ_area - Integral
 
 for line in ax.xaxis.get_ticklines()+ax.yaxis.get_ticklines():
-	line.set_markeredgewidth(3)
+    line.set_markeredgewidth(3)
 
 
 ax.set_xlim([-0.7,0.7])

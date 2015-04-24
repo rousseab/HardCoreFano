@@ -33,22 +33,21 @@ nmax_fine   = 128
 n_blocks_coarse_to_fine = 6
 """
 
-"""
 nmax_coarse = 8
 nmax_fine   = 32
-n_blocks_coarse_to_fine = 3
-"""
+n_blocks_coarse_to_fine = 7
 
+"""
 nmax_coarse = 16
 nmax_fine   = 64
 n_blocks_coarse_to_fine = 6
-
+"""
 
 
 clip_grid = False
 include_Gamma = True
 
-mu = -0.400 # eV
+mu = -0.500 # eV
 hw =  0.200 # eV
 
 clip_energy = N.abs(mu)+1.00 # eV
@@ -120,8 +119,6 @@ rad_mu_plus_hw  = (2*k_mu+k_hw)/twopia
 rad_mu_minus_hw = (2*k_mu-k_hw)/twopia
 #rad_mu_plus_hw  = (k_mu+k_hw)/twopia
 #rad_mu_minus_hw = (k_mu-k_hw)/twopia
-
-
 
 
 rad_upper_limit = clip_energy/hvF/twopia
