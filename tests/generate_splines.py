@@ -9,7 +9,7 @@ kB = 8.6173324e-5 # eV/K
 T  = 300 # K
 beta = 1./(kB*T)
 
-mu    = -0.400 # meV 
+mu    = 0.000 # meV 
 kernel_Gamma_width = 0.200  # 200 meV
 Green_Gamma_width  = 0.025   
 

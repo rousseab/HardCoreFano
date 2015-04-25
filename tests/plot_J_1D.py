@@ -25,9 +25,16 @@ T = 300.
 beta = 1./(kB*T)
 
 kernel_Gamma_width = 0.200 # eV
-Green_Gamma_width  = 0.100
+
+"""
 mu = -0.400
+Green_Gamma_width  = 0.100
 hw_ext = 0.150
+"""
+Green_Gamma_width  = 0.0250
+mu = -0.400
+hw_ext = 0.1755
+
 
 
 #state_n2 = 'interband'
@@ -42,7 +49,7 @@ J_numerical = handler.read_J_array('numerical_J_%s'%state_n2)
 handler.close_ncfile()
 
 
-i_xi_1 = 100
+i_xi_1 = 40
 
 xi_1 = list_xi_1[i_xi_1]
 list_J_numerical = J_numerical[i_xi_1,:] 
@@ -81,10 +88,14 @@ for i3, xi_3 in enumerate(list_xi_3):
     xi_3_array = N.array([xi_3])
 
     if N.abs(xi_1 - xi_3) < tol:
+        #D_1 = Jobject.get_D(xi_1_array+delta, xi_2_array)[0]
+        #D_3 = Jobject.get_D(xi_3_array-delta, xi_2_array)[0]
+        #list_J_code[i3] += (D_1-D_3)/(2.*delta)
+
         D_1 = Jobject.get_D(xi_1_array, xi_2_array)[0]
         D_3 = Jobject.get_D(xi_3_array+delta, xi_2_array)[0]
-
         list_J_code[i3] += (D_1-D_3)/(-delta)
+
     else:
 
         D_1 = Jobject.get_D(xi_1_array, xi_2_array)[0]
