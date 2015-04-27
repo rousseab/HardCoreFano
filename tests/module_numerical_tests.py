@@ -203,7 +203,6 @@ class NumericalJ(object):
 
         return J_integrand
 
-
 def complex_Fermi_occupation(z,beta):
 
         f_xi2 = complex(1.,0.)/(1.+N.exp(beta*z))
@@ -238,37 +237,6 @@ def get_J_pole_approximation(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma
         J += (f_xi2_ehw-f_xi2)*kernel*den12*den32
 
     return J
-
-
-    list_xi = N.array([xi])
-
-    KR = get_KR(list_xi+mu,kernel_Gamma_width)[0]
-    KI = get_KI(list_xi+mu,kernel_Gamma_width)[0]
-
-
-        prefactor = eta/(2.*N.pi*1j)
-
-        kernel = KR-1j*eta*KI
-
-        D_n1k  = complex(1.,0.)/(xi - xi_n1k  + 1j*eta*Green_Gamma_width)
-        D_n3kq = complex(1.,0.)/(xi - xi_n3kq + 1j*eta*Green_Gamma_width)
-
-        D_n2k_1 = complex(1.,0.)/(xi - xi_n2k -eta*hw - 1j*Green_Gamma_width)
-        D_n2k_2 = complex(1.,0.)/(xi - xi_n2k -eta*hw + 1j*Green_Gamma_width)
-
-        D_n2k_3 = complex(1.,0.)/(xi - xi_n2k - hw + 1j*eta*Green_Gamma_width)
-        D_n2k_4 = complex(1.,0.)/(xi - xi_n2k + hw + 1j*eta*Green_Gamma_width)
-
-
-        Term_1  =  ( -eta * hw ) * (D_n2k_1 - D_n2k_2) 
-
-
-        common_factor = prefactor*kernel*D_n1k*D_n3kq 
-
-        J_integrand_df += common_factor*Term_1  
-
-
-    return J_integrand_df
 
 
 
