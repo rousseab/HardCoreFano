@@ -203,97 +203,42 @@ class NumericalJ(object):
 
         return J_integrand
 
-def get_exact_linear_kernel_J_integrand(xi, xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
+
+def complex_Fermi_occupation(z,beta):
+
+        f_xi2 = complex(1.,0.)/(1.+N.exp(beta*z))
+
+def get_J_pole_approximation(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
     """
-    This function computes the exact integrand leading to the J function.
+    This function computes the J factor using the formula derived by using the residue theorem, but neglecting
+    the poles coming from the Fermi occupation function.
+
+    Details can be seen in my document "computing_J.pdf".
     """
 
-    J_integrand_df = complex(0.,0.)
-    J_integrand_f  = complex(0.,0.)
+    J = complex(0.,0.)
 
-    list_xi = N.array([xi])
-
-    KR_inf = get_KR_inf(list_xi+mu)[0]
-
-    f_xi = function_fermi_occupation(list_xi,0.,beta)[0]
 
     for eta in [-1,1]:
-        prefactor = eta/(2.*N.pi*1j)
 
-        kernel = KR_inf
+        z = xi_n2k-1j*eta*Green_Gamma_width
+        f_xi2 = complex_Fermi_occupation(z,beta)
 
-        D_n1k  = complex(1.,0.)/(xi - xi_n1k  + 1j*eta*Green_Gamma_width)
-        D_n3kq = complex(1.,0.)/(xi - xi_n3kq + 1j*eta*Green_Gamma_width)
-
-        D_n2k_1 = complex(1.,0.)/(xi - xi_n2k -eta*hw - 1j*Green_Gamma_width)
-        D_n2k_2 = complex(1.,0.)/(xi - xi_n2k -eta*hw + 1j*Green_Gamma_width)
-
-        D_n2k_3 = complex(1.,0.)/(xi - xi_n2k - hw + 1j*eta*Green_Gamma_width)
-        D_n2k_4 = complex(1.,0.)/(xi - xi_n2k + hw + 1j*eta*Green_Gamma_width)
-
-        f_xi_ehw = function_fermi_occupation(list_xi-eta*hw,0.,beta)[0]
-
-        Term_1  =  ( f_xi - f_xi_ehw ) * (D_n2k_1 - D_n2k_2) 
-
-        Term_2  =   f_xi * (D_n2k_3 - D_n2k_4) 
-
-        common_factor = prefactor*kernel*D_n1k*D_n3kq 
-
-        J_integrand_df += common_factor*Term_1  
-        J_integrand_f  += common_factor*Term_2  
-
-    J_integrand = J_integrand_df+ J_integrand_f  
-
-    return J_integrand
-
-def get_approximate_J_df_integrand(xi, xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
-    """
-    This function computes the exact integrand leading to the J function.
-    """
-
-    J_integrand_df = complex(0.,0.)
-    J_integrand_f  = complex(0.,0.)
-
-    list_xi = N.array([xi])
-
-    KR = get_KR(list_xi+mu,kernel_Gamma_width)[0]
-    KI = get_KI(list_xi+mu,kernel_Gamma_width)[0]
-
-    df = d_Fermi_dxi(list_xi,0.,beta)[0]
-
-    for eta in [-1,1]:
-        prefactor = eta/(2.*N.pi*1j)
-
-        kernel = KR-1j*eta*KI
-
-        D_n1k  = complex(1.,0.)/(xi - xi_n1k  + 1j*eta*Green_Gamma_width)
-        D_n3kq = complex(1.,0.)/(xi - xi_n3kq + 1j*eta*Green_Gamma_width)
-
-        D_n2k_1 = complex(1.,0.)/(xi - xi_n2k -eta*hw - 1j*Green_Gamma_width)
-        D_n2k_2 = complex(1.,0.)/(xi - xi_n2k -eta*hw + 1j*Green_Gamma_width)
-
-        D_n2k_3 = complex(1.,0.)/(xi - xi_n2k - hw + 1j*eta*Green_Gamma_width)
-        D_n2k_4 = complex(1.,0.)/(xi - xi_n2k + hw + 1j*eta*Green_Gamma_width)
+        z = xi_n2k-eta*hw-1j*eta*Green_Gamma_width
+        f_xi2_ehw = complex_Fermi_occupation(z,beta)
 
 
-        Term_1  =  eta*hw*df* (D_n2k_1 - D_n2k_2) 
-
-        common_factor = prefactor*kernel*D_n1k*D_n3kq 
-
-        J_integrand_df += common_factor*Term_1  
+        z = xi_n2k-eta*hw+ mu- 1j*eta*(Green_Gamma_width+kernel_Gamma_width)
+        kernel = get_gamma(z)
 
 
-    return J_integrand_df
+        den12 = complex(1.,0.)/(hw+2.*1j*Green_Gamma_width - eta*(xi_n2k-xi_n1k))
+        den32 = complex(1.,0.)/(-eta*(hw+2.*1j*Green_Gamma_width)+xi_n2k-xi_n3kq)
 
-def get_J_df_approx(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
-    """
-    This function computes the approximate form for the df term of J, which is no longer an integrand.
-    """
+        J += (f_xi2_ehw-f_xi2)*kernel*den12*den32
 
-    J_integrand_df = complex(0.,0.)
-    J_integrand_f  = complex(0.,0.)
+    return J
 
-    xi = 0.
 
     list_xi = N.array([xi])
 
@@ -301,7 +246,6 @@ def get_J_df_approx(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, G
     KI = get_KI(list_xi+mu,kernel_Gamma_width)[0]
 
 
-    for eta in [-1,1]:
         prefactor = eta/(2.*N.pi*1j)
 
         kernel = KR-1j*eta*KI
