@@ -31,9 +31,9 @@ mu = -0.400
 Green_Gamma_width  = 0.100
 hw_ext = 0.150
 """
-Green_Gamma_width  = 0.0250
+Green_Gamma_width  = 0.100
 mu = -0.400
-hw_ext = 0.1755
+hw_ext = 0.150
 
 
 
@@ -49,7 +49,7 @@ J_numerical = handler.read_J_array('numerical_J_%s'%state_n2)
 handler.close_ncfile()
 
 
-i_xi_1 = 40
+i_xi_1 = 100
 
 xi_1 = list_xi_1[i_xi_1]
 list_J_numerical = J_numerical[i_xi_1,:] 
