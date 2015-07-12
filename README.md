@@ -1,8 +1,12 @@
-Graphene-IR-Spectrum V10
-=========================
+Graphene-IR-Spectrum
+====================
 
-This version tries to correct what seems to be a bug in version 9.0,
-which did not reproduce J(q,w) well.
+Computation of anomalous IR response of grafted graphene, within a tight-binding model 
 
-Also, the approximation f(xi) - f(xi+eta hw) ~ -eta hw df/dxi will be removed,
-at the cost of an improved scheme for Kramers-Kronig integration.
+This code implements the theory presented in the paper 
+
+"Phonon-disorder valley scattering modulation of optical transparency in graphene" ( arXiv:1407.8141 )
+
+The goal of the project is to compute the contribution to the optical conductivity of 
+disordered graphene of the Feynman diagram presented in the paper. 
+
