@@ -6,3 +6,4 @@
 local_runs/
 from_Briaree/
 *.gz
+*.log
