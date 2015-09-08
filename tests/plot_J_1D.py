@@ -26,15 +26,14 @@ beta = 1./(kB*T)
 
 kernel_Gamma_width = 0.200 # eV
 
-"""
 mu = -0.400
+Green_Gamma_width  = 0.025
+hw_ext = 0.1755
+"""
 Green_Gamma_width  = 0.100
+mu = -0.400
 hw_ext = 0.150
 """
-Green_Gamma_width  = 0.100
-mu = -0.400
-hw_ext = 0.150
-
 
 
 #state_n2 = 'interband'
@@ -49,7 +48,7 @@ J_numerical = handler.read_J_array('numerical_J_%s'%state_n2)
 handler.close_ncfile()
 
 
-i_xi_1 = 100
+i_xi_1 = 50
 
 xi_1 = list_xi_1[i_xi_1]
 list_J_numerical = J_numerical[i_xi_1,:] 
@@ -73,15 +72,18 @@ Jobject  = JGridFunction(q_vector, hw_ext, Green_Gamma_width, kernel_Gamma_width
 
 
 list_J_code = complex(0.,0.)*N.zeros_like(list_J_numerical)
+list_J_pole = complex(0.,0.)*N.zeros_like(list_J_numerical)
 
 tol = 1e-8
 delta = 1e-4
-xi_1_array = N.array([xi_1])
 
 if state_n2 == 'intraband':
-    xi_2_array = xi_1_array 
+    xi_2 = xi_1
 elif state_n2 == 'interband':
-    xi_2_array = -xi_1_array -2*mu
+    xi_2 = -xi_1 - 2*mu
+
+xi_1_array = N.array([xi_1])
+xi_2_array = N.array([xi_2])
 
 for i3, xi_3 in enumerate(list_xi_3):
     print 'doing i3 = %i'%i3
@@ -105,6 +107,7 @@ for i3, xi_3 in enumerate(list_xi_3):
 
 
 
+    list_J_pole[i3] = get_J_pole_approximation(xi_1, xi_2, xi_3, hw_ext, mu, beta, kernel_Gamma_width, Green_Gamma_width)
 
 
 h = 10  # figure height
@@ -118,15 +121,20 @@ ax3 = fig1.add_subplot(223)
 ax4 = fig1.add_subplot(224)
 
 
-kwargs = { 'ms':8,'lw':4}
 
 dJ = list_J_numerical-list_J_code
 
+kwargs = { 'ms':8,'lw':4}
 ax1.plot(list_xi_3, N.real(list_J_numerical),'-',label='Numerical',**kwargs)
 ax1.plot(list_xi_3, N.real(list_J_code),'o',label='Code',**kwargs)
+ax1.plot(list_xi_3, N.real(list_J_pole),'h--',label='Residue approx.',**kwargs)
+
+
 
 ax2.plot(list_xi_3, N.imag(list_J_numerical),'-',label='Numerical',**kwargs)
 ax2.plot(list_xi_3, N.imag(list_J_code),'o',label='Code',**kwargs)
+ax2.plot(list_xi_3, N.imag(list_J_pole),'h',label='Residue approx.',**kwargs)
+
 
 ax3.plot(list_xi_3, N.real(dJ),'-',**kwargs)
 ax4.plot(list_xi_3, N.imag(dJ),'-',**kwargs)

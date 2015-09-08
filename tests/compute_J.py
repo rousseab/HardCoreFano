@@ -24,7 +24,7 @@ beta = 1./(kB*T)
 kernel_Gamma_width = 0.200 # eV
 Green_Gamma_width  = 0.025
 mu = -0.400
-hw = 0.1755
+hw = 0.200
 
 
 Integrand_generator = NumericalJ( hw, mu, beta, kernel_Gamma_width, Green_Gamma_width)

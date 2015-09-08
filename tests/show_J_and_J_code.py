@@ -15,15 +15,19 @@ from module_numerical_tests import *
 import numpy as N
 import matplotlib.pyplot as plt
 
+"""
 Green_Gamma_width = 0.100 # eV
 mu = -0.400 # eV
 hw_ext = 0.150 # eV
 
-"""
 Green_Gamma_width = 0.025 # meV
 mu = -0.400 # meV
 hw_ext = 0.1755 # meV
 """
+Green_Gamma_width = 0.025 # meV
+mu = -0.400 # meV
+hw_ext = 0.200 # meV
+
 
 
 

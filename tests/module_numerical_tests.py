@@ -204,8 +204,9 @@ class NumericalJ(object):
         return J_integrand
 
 def complex_Fermi_occupation(z,beta):
-
-        f_xi2 = complex(1.,0.)/(1.+N.exp(beta*z))
+    f = complex(1.,0.)/(1.+N.exp(beta*z))
+    return  f
+    
 
 def get_J_pole_approximation(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma_width, Green_Gamma_width):
     """
@@ -216,7 +217,6 @@ def get_J_pole_approximation(xi_n1k, xi_n2k, xi_n3kq, hw, mu, beta, kernel_Gamma
     """
 
     J = complex(0.,0.)
-
 
     for eta in [-1,1]:
 
