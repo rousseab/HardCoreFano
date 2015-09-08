@@ -8,7 +8,7 @@ import os
 import time
 import subprocess as SUB
 
-top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_5.0/'
+top_dir = '/Users/Bruno/work/Projects/fano_project/HardCoreKernelFano_10.0/'
 
 sys.path.append(top_dir+'modules/')
 
@@ -27,7 +27,7 @@ HCK = path+'HardCoreFano.py'
 
 max_processes = 8
 
-mu   =-0.400 # eV
+mu   =-0.450 # eV
 T    = 300.  # Kelvin
 
 kB   = 8.6173324e-5 # eV/K
@@ -35,30 +35,30 @@ beta = 1./(kB*T)
 
 list_nu_index = [2,3,4,5]
 
-nkmax_coarse_singular =  8
-nkmax_fine_singular   = 32
-nk_blocks_coarse_to_fine_singular = 3
-
-nkmax_coarse_smooth =  8
-nkmax_fine_smooth = 16
-nk_blocks_coarse_to_fine_smooth = 2
+nkmax_coarse =  8
+nkmax_fine   = 32
+nk_blocks_coarse_to_fine = 3
 
 
 nqmax_coarse =  8
 nqmax_fine   = 32
 nq_blocks_coarse_to_fine = 3
 
-kernel_Gamma_width  = 0.200 # meV
-delta_width         = 0.050 # meV
+kernel_Gamma_width  = 0.200 # eV
 
-n_hw   = 151
-hw_max = 0.250
-
+#Green_Gamma_width   = 0.025  # eV
+#Green_Gamma_width   = 0.050  # eV
+#Green_Gamma_width   = 0.075  # eV
+#Green_Gamma_width   = 0.100 # eV
+#Green_Gamma_width   = 0.125 # eV
+#Green_Gamma_width   = 0.150 # eV
+#Green_Gamma_width   = 0.200 # eV
+#Green_Gamma_width   = 0.300 # eV
+Green_Gamma_width   = 0.400 # eV
 
 #================================================================================
 # Phonon q point grid
 #================================================================================
-
 
 list_R, list_FC  =  build_force_constants_Dubay_using_symmetry()
 
@@ -69,7 +69,6 @@ Renormalizor = CompteMauriRenormalize(mauri_filepath,list_FC,list_R)
 q_include_Gamma = True
 
 Q_grid = TesselationDoubleGrid(nqmax_coarse, nqmax_fine, nq_blocks_coarse_to_fine,q_include_Gamma )
-
 
 
 Q_wedge = Q_grid.list_wedges[0]
@@ -110,18 +109,22 @@ log = open('calculation.log','w')
 
 set_of_processes = set()
 
-work_dir = 'nq=%i_%i_%i_nk_smooth=%i_%i_%i_nk_singular=%i_%i_%i_mu=%4.3f_eV_Gamma=%4.3f_eV/'%(nqmax_coarse,nqmax_fine,nq_blocks_coarse_to_fine, nkmax_coarse_smooth, nkmax_fine_smooth,nk_blocks_coarse_to_fine_smooth, nkmax_coarse_singular, nkmax_fine_singular,nk_blocks_coarse_to_fine_singular, mu, kernel_Gamma_width)
+work_dir = 'nq=%i_%i_%i_nk=%i_%i_%i_mu=%i_meV_kernel_Gamma=%i_meV_Green_Gamma=%i_meV/'%(nqmax_coarse, nqmax_fine, nq_blocks_coarse_to_fine, \
+                                                                                        nkmax_coarse, nkmax_fine, nk_blocks_coarse_to_fine, \
+                                                                                        1000*mu, 1000*kernel_Gamma_width,1000*Green_Gamma_width)
 #os.mkdir(work_dir )
+#quit()
 os.chdir(work_dir )
 
-
 # make the scattering kernel
-"""
-SK = ScatteringKernel(mu,beta,kernel_Gamma_width)
-kernel_filename ='scattering_spline.nc'
-SK.build_scattering_kernel()
-SK.build_and_write_spline_parameters(kernel_filename)
-"""
+list_hw_ext = N.arange(0.0,0.220,0.001)
+filename ='scattering_spline.nc'
+n_xi_grid = 8001
+#SK = ScatteringKernel(mu, beta, kernel_Gamma_width, Green_Gamma_width, spline_order = 1)
+#SK.build_scattering_kernel_integrals(list_hw_ext, n_xi_grid = n_xi_grid )
+#SK.build_and_write_spline_parameters(filename)
+
+
 
 
 for nu_index in list_nu_index:
@@ -137,14 +140,13 @@ for nu_index in list_nu_index:
         filename = filename_template%(iq_index,nu_index)
         
         command  = build_command(HCK,mu,T,\
-                                    nkmax_coarse_smooth, nkmax_fine_smooth, nk_blocks_coarse_to_fine_smooth, \
-                                    nkmax_coarse_singular, nkmax_fine_singular, nk_blocks_coarse_to_fine_singular, \
-                                    n_hw,hw_max, delta_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,filename)
+                                    nkmax_coarse, nkmax_fine, nk_blocks_coarse_to_fine, \
+                                    Green_Gamma_width,kernel_Gamma_width,hw_ph,q_ph,E_ph,filename)
 
         # take out finished jobs
         while len(set_of_processes) >= max_processes:
 
-            time.sleep(0.2)
+            #time.sleep(0.2)
             set_of_finished_processes = set()
             for job in set_of_processes:
                 if job.poll() is not None:
@@ -159,6 +161,7 @@ for nu_index in list_nu_index:
 
         job = SUB.Popen(command)
         set_of_processes.add(job)
+        #quit()
 
 
 os.chdir('../')
